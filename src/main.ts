@@ -16,13 +16,18 @@ async function bootstrap() {
 
     app.useWebSocketAdapter(new WsAdapter(app)); // protocol WS simplu (nu Socket.IO)
 
-    /* TODO CORS în NestJS (dev vs prod)?*/
+    /* TODO CORS în NestJS (dev vs prod)? */
     app.enableCors({
-        origin: 'http://localhost:4200',
+        origin: [
+            'http://localhost:4200',
+            'http://10.0.0.133:4200',
+        ],
         credentials: false,
     });
 
-    await app.listen(process.env.PORT ?? 3000);
+    app.enableCors({ origin: true, credentials: true });
+    const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+    await app.listen(port, '0.0.0.0');
 }
 
 bootstrap();

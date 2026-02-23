@@ -12,6 +12,7 @@ const toDateOrNull = (v: any): Date | null => {
 
 /******************************************************************************
 JSON original	            Entitate TS (proprietate)	Coloană DB (name)
+ ............................................................................
 _id.$oid	                id (sau taskId)	            id (sau task_id)
 PJS_ID	                    pjsId	                    pjs_id
 PROJECT_NO	                projectNo	                project_no
@@ -24,19 +25,27 @@ PART_NO	                    partNo	                    part_no
 REV_NO	                    revNo	                    rev_no
 SEQUENCE	                sequence	                sequence
 STATUS	                    status	                    status
+
 QTY_TO_FAB	                qtyToFab	                qty_to_fab
 QTY_FAB	                    qtyFab	                    qty_fab
 PROGRESS	                progress	                progress
+
 START_DATE	                startDate	                start_date
 END_DATE	                endDate	                    end_date
+
 ESTIM_PER_PART_TIME	        estimPerPartTime	        estim_per_part_time
 ESTIM_PER_PART_TIME_NET	    estimPerPartTimeNet	        estim_per_part_time_net
+
 Date requis	                dateRequis	                date_requis
+
 N° Comm	                    noComm	                    no_comm
 SOUM_NO	                    soumNo	                    soum_no
+
 FAB_TIME	                fabTime	                    fab_time
 FAB_TIMES	                fabTimes	                fab_times
+FAB_TIME_SETUP	            fabTimeSetup	            fab_time_setup
 timestamp	                timestamp	                timestamp
+
 ORD	                        ord	                        ord
 StatTask	                statTask	                stat_task
 StatProd	                statProd	                stat_prod
@@ -47,7 +56,7 @@ StatPink	                statPink	                stat_pink
 StatGreen	                statGreen	                stat_green
 StatOrange	                statOrange	                stat_orange
 StatWhite	                statWhite	                stat_white
-FAB_TIME_SETUP	            fabTimeSetup	            fab_time_setup
+
 *******************************************************************************/
 
 export function mapRawToTask(raw: Raw) {

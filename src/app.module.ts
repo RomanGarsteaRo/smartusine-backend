@@ -10,6 +10,8 @@ import { SchedulingGateway } from './web-socket/sheduling.gateway';
 import { RealtimeModule } from './web-socket/realtime.module';
 import { CncsModule } from './cncs/cncs.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
+import { WorkModule } from './work/work.module';
+import { WorkOverrideModule } from './work-override/work-override.module';
 
 
 @Module({
@@ -26,13 +28,15 @@ import { SchedulingModule } from './scheduling/scheduling.module';
             password: process.env.DB_PASS,
             database: process.env.DB_NAME,
             autoLoadEntities: true,
-            synchronize: false, // [true] Doar pentru development si doar pentru crearea tabelului in DB daca nu exista!
+            synchronize: false,  // [true] Doar pentru development si doar pentru crearea tabelului in DB daca nu exista!
         }),
         TypeOrmModule.forFeature([TaskEntity]),
         RealtimeModule,
         TasksModule,
         CncsModule,
         SchedulingModule,
+        WorkModule,
+        WorkOverrideModule
     ],
     controllers: [AppController],
     providers: [AppService, SchedulingGateway],

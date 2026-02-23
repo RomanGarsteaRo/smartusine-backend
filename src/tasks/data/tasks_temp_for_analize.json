@@ -1,0 +1,140 @@
+[
+  {
+    "_id": "104927000000000000000000",
+    "PJS_ID": 104927,
+    "PROJECT_NO": 17854,
+    "JOB_NO": "17854-1",
+    "WCA_NO": 10075,
+    "WCA_NAME": "WT3_1",
+
+    "CLIENT_NO": "174",
+    "CLIENT_NAME": "SBI Fabricant de poêles ",
+    "PART_NO": "30592_Rév.04A",
+    "REV_NO": "",
+    "SEQUENCE": 2,
+    "STATUS": 10,
+    "QTY_TO_FAB": 7000,
+    "QTY_FAB": 0,
+    "PROGRESS": 0,
+
+    "START_DATE": null,
+    "END_DATE": null,
+
+    // "ESTIM_FIXED_TIME": 0,
+    "ESTIM_PER_PART_TIME":     0.019166666666666665, /* +++ Viteza de lucru piece/H */
+    "ESTIM_PER_PART_TIME_NET": 0.019166666666666665,
+    "Date requis": "2025-02-28T05:00:00.000Z",
+
+    "N° Comm": "PC325",
+    "SOUM_NO": 10820,
+    "FAB_TIME":       0.019309523809523808,      /* Viteza de lucru  piece/H    [viteza calculata cu setup 1ora inclus?] */
+    "FAB_TIME_SETUP": 134.16666666666666,        /* time H (timpul necesar pentru productie fara setup)    */
+    // "totalHr":     134.16666666666666,
+
+    // "test":        135.16666666666666,        /* artefact [trebuie exclus] */
+    "FAB_TIMES":      135.16666666666666,        /* timpul total de producti cu 1 ora de setaup inclusa ? */
+
+    // "MDESCR": "Flat bar 1018C 1.000 X 0.750po",
+    "timestamp":      1723725950775,             /* timpul de creare a rindului task in db */
+
+
+    "ORD": 5,
+
+    "StatTask": 0,
+    "StatProd": false,
+    "StatRed": false,
+    "StatYell": false,
+    "StatBlue": false,
+    "StatPink": true,
+    "StatGreen": false,
+    "StatOrange": true,
+    "StatWhite": false,
+
+    "Prog": [
+      {
+        "_id": "5ffdd9941906702d80cda124",
+        "nrProg": "O0438(WT)",
+        "client": "S.B.I.",
+        "nrPiece": "30592_Rév.04A",
+        "machine": "10074",
+        "tempsCycle": "1MIN4SEC",
+        "tempsSetup": "2H30",
+        "cadence": "1MIN8SEC",
+        "dataUpper": [
+          {
+            "tM": null,
+            "shapeM": "LT-X E-MILL 1/4 4 FLUTES",
+            "descrM": "82000221 OSG000(SORTIE 0.9)",
+            "tS": null,
+            "shapeS": "LT-X SUMO-DRILL 9.7(COLLET DM)",
+            "descrS": "DCN0374-187-50A-5D-ICP0382IC908"
+          },
+          {
+            "tM": null,
+            "shapeM": "LT-X E-MILL 1/2 5FL",
+            "descrM": "VGM5-0139OSG(SORTIE 1.5)",
+            "tS": null,
+            "shapeS": "LT-X TAP 10-32",
+            "descrS": "1651501208"
+          },
+          {
+            "tM": null,
+            "shapeM": "PROFILER ISCAR",
+            "descrM": "TAGN3MFIC5400",
+            "tS": null,
+            "shapeS": "LT-X DRILL 4MM",
+            "descrS": "HP255-1574"
+          }
+        ],
+        "morseM": null,
+        "G54M": null,
+        "G55M": null,
+        "G56M": null,
+        "G57M": null,
+        "morseS": null,
+        "G54S": null,
+        "G55S": null,
+        "G56S": null,
+        "G57S": null,
+        "PSiM": null,
+        "sortirPieceM": "2.560",
+        "PSiS": null,
+        "sortirPieceS": null,
+        "macroVariab": null,
+        "coupeBarre": "47.750(2023-03-24)",
+        "qteMcx": "33",
+        "barFeeder": [
+          {
+            "partSetup": "3",
+            "applSetup": "1",
+            "position": "E.O.B. 48.10"
+          },
+          {
+            "partSetup": "0.760",
+            "applSetup": "1",
+            "position": "T.P. 48.70"
+          },
+          {
+            "partSetup": "1.4",
+            "applSetup": "1",
+            "position": null
+          },
+          {
+            "partSetup": null,
+            "applSetup": null,
+            "position": null
+          },
+          {
+            "partSetup": null,
+            "applSetup": null,
+            "position": null
+          }
+        ],
+        "notes": "DÉSAXÉ  EN ''Y'' DE +0.038 ENDMILL 1/2",
+        "type": "A",
+        "timestamp": 1741628963359
+      }
+    ],
+    "NrProg": ""
+  }
+]
