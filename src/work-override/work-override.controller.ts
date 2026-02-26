@@ -44,11 +44,9 @@ export class WorkDayOverrideController {
     @Get()
     listRange(
         @Query('fromAbsMs') fromAbsMs: string,
-        @Query('toAbsMs') toAbsMs?: string,
     ) {
         const from = Number(fromAbsMs);
-        const to = toAbsMs != null ? Number(toAbsMs) : undefined;
-        return this.svc.listRange(from, to);
+        return this.svc.listRange(from);
     }
 
     @Post()

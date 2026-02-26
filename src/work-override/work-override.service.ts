@@ -62,25 +62,14 @@ export class WorkDayOverrideService {
     /* .............................................................................................................. */
 
 
-    /**
-     * Returnează override-urile care INTERSECTEAZĂ intervalul [fromAbsMs, toAbsMs).
-     * Query clasic: start < to AND end > from
-     */
-    async listRange(fromAbsMs: number, toAbsMs?: number): Promise<WorkUzineOverrideEntity[]> {
-        if (!Number.isFinite(fromAbsMs)) throw new BadRequestException('fromAbsMs required');
-
-        const from = Math.floor(fromAbsMs);
-        const to = Number.isFinite(toAbsMs as any)
-            ? Math.floor(toAbsMs as number)
-            : from + 180 * MS_PER_DAY; // fallback MVP
-
-        if (to <= from) throw new BadRequestException('toAbsMs must be > fromAbsMs');
+    async listRange(fromAbsMs: number): Promise<WorkUzineOverrideEntity[]> {
+        if (!Number.isFinite(fromAbsMs)) {throw new BadRequestException('fromAbsMs required');}
+        const from: number = Math.floor(fromAbsMs);
 
         return this.repo
             .createQueryBuilder('o')
             .leftJoinAndSelect('o.type', 't')
-            .where('o.start_abs_ms < :to', { to: String(to) })   // BIGINT -> string safe
-            .andWhere('o.end_abs_ms > :from', { from: String(from) })
+            .where('o.end_abs_ms > :from', { from: String(from) }) // BIGINT safe
             .orderBy('o.start_abs_ms', 'ASC')
             .addOrderBy('o.id', 'ASC')
             .getMany();
