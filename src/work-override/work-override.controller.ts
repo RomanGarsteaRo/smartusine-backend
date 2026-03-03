@@ -12,7 +12,7 @@ export class WorkDayOverrideController {
 
 
 
-    /* ---------- TYPES ---------- */
+    /* TYPES */
 
     @Get('types')
     listTypes() {
@@ -34,7 +34,7 @@ export class WorkDayOverrideController {
 
 
 
-    /* ---------- OVERRIDES ---------- */
+   /* OVERRIDES */
 
     /**
      * Query:
