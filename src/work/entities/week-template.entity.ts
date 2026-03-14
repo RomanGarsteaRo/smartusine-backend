@@ -41,11 +41,12 @@ export class WorkUzineCalendarEntity {
     week!: WorkWeek;
 
     /**
-     * Date-only in timezone-ul calendarului. Recomandăm [dtstart, dtend) (dtend exclusiv).
+     * Date-only in timezone-ul calendarului.
+     * null => template saved but inactive
      * Format: "YYYY-MM-DD"
      */
-    @Column({ type: 'date', name: 'dtstart' })
-    dtstart!: string;
+    @Column({ type: 'date', name: 'dtstart', nullable: true })
+    dtstart!: string | null;
 
     @Column({ type: 'date', name: 'dtend', nullable: true })
     dtend!: string | null;

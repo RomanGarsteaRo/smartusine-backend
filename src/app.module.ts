@@ -12,6 +12,8 @@ import { CncsModule } from './cncs/cncs.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
 import { WorkModule } from './work/work.module';
 import { WorkOverrideModule } from './work-override/work-override.module';
+import { WorkMachineCalendarModule } from './work-machine-calendar/module';
+import { WorkMachineOverrideModule } from './work-machine-override/work-machine-override.module';
 
 
 @Module({
@@ -36,7 +38,9 @@ import { WorkOverrideModule } from './work-override/work-override.module';
         CncsModule,
         SchedulingModule,
         WorkModule,
-        WorkOverrideModule
+        WorkOverrideModule,
+        WorkMachineCalendarModule,
+        WorkMachineOverrideModule,
     ],
     controllers: [AppController],
     providers: [AppService, SchedulingGateway],

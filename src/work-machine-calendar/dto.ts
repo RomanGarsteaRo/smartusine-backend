@@ -1,5 +1,22 @@
-import { IsInt, IsNotEmpty, IsObject, IsOptional, IsString, Matches, Max, Min, ValidateIf } from 'class-validator';
-import type { WorkWeek } from '../entities/week-template.entity';
+import {
+    ArrayUnique,
+    IsArray,
+    IsInt,
+    IsObject,
+    IsOptional,
+    IsString, Matches,
+    Max,
+    Min, ValidateIf,
+} from 'class-validator';
+import type { WorkWeek } from './entity';
+
+
+
+
+
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+
 
 
 export class WorkWindowDto {
@@ -13,45 +30,41 @@ export class WorkWindowDto {
     @Max(1440)
     eMin!: number;
 }
-const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
+export class CreateWorkMachineCalendarDto {
 
-
-export class CreateWorkUzineCalendarDto {
-
+    @IsOptional()
+    @ValidateIf((_, v) => v !== null && v !== undefined)
     @IsString()
-    @IsNotEmpty()
-    name!: string;
+    name!: string | null;
 
     @IsOptional()
     @IsString()
-    note?: string;
+    note?: string | null;
 
     @IsOptional()
     @IsString()
     timezone?: string;
 
     /**
-     * Keys: "0".."6"
-     * Values: WorkWindowDto[]
+     * Lista id-urilor CNC.
+     * Compatibil cu backendul actual: cnc_id este string.
      */
+    @IsOptional()
+    @IsArray()
+    @ArrayUnique()
+    @IsString({ each: true })
+    cnc!: string[];
+
     @IsObject()
     week!: WorkWeek;
 
-    /**
-     * "YYYY-MM-DD"
-     * string => template scheduled/active
-     * null/omitted => template saved but inactive
-     */
     @IsOptional()
     @ValidateIf((_, v) => v !== null && v !== undefined)
     @IsString()
     @Matches(YMD_RE)
     dtstart?: string | null;
 
-    /**
-     * "YYYY-MM-DD" or omitted => open-ended
-     */
     @IsOptional()
     @ValidateIf((_, v) => v !== null && v !== undefined)
     @IsString()
@@ -59,20 +72,26 @@ export class CreateWorkUzineCalendarDto {
     dtend?: string | null;
 }
 
-export class UpdateWorkUzineCalendarDto {
+export class UpdateWorkMachineCalendarDto {
+
+    @IsOptional()
+    @ValidateIf((_, v) => v !== null && v !== undefined)
+    @IsString()
+    name?: string | null;
 
     @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    name?: string;
-
-    @IsOptional()
-    @IsString()
-    note?: string | null; // permite null ca să “ștergi” nota
+    note?: string | null;
 
     @IsOptional()
     @IsString()
     timezone?: string;
+
+    @IsOptional()
+    @IsArray()
+    @ArrayUnique()
+    @IsString({ each: true })
+    cnc?: string[];
 
     @IsOptional()
     @IsObject()
@@ -84,11 +103,6 @@ export class UpdateWorkUzineCalendarDto {
     @Matches(YMD_RE)
     dtstart?: string | null;
 
-    /**
-     *  string | null:
-     *  - string => setează dtend
-     *  - null   => devine open-ended
-     */
     @IsOptional()
     @ValidateIf((_, v) => v !== null && v !== undefined)
     @IsString()
@@ -96,11 +110,12 @@ export class UpdateWorkUzineCalendarDto {
     dtend?: string | null;
 }
 
-export class WorkUzineCalendarResponseDto {
+export class WorkMachineCalendarResponseDto {
     id!: number;
-    name!: string;
+    name!: string | null;
     note!: string | null;
     timezone!: string;
+    cnc!: string[];
     week!: WorkWeek;
     dtstart!: string | null;
     dtend!: string | null;

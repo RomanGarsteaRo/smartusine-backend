@@ -1,12 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TaskEntity } from './entities/task.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, In, Repository } from 'typeorm';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { QueryTaskDto } from './dto/query-task.dto';
 import { SchedulingGateway } from '../web-socket/sheduling.gateway';
+import { ReorderTasksDto } from './dto/reorder-tasks.dto';
 
 @Injectable()
 export class TasksService {
@@ -17,11 +18,34 @@ export class TasksService {
         private readonly ws: SchedulingGateway,
     ) {}
 
+
+
+
+
+    private parseWcaNos(v?: string | number[]): number[] | null {
+        if (!v) return null;
+
+        if (Array.isArray(v)) {
+            const nums = v.map(Number).filter(n => Number.isFinite(n));
+            return nums.length ? nums : null;
+        }
+
+        const nums = String(v)
+            .split(',')
+            .map(s => Number(s.trim()))
+            .filter(n => Number.isFinite(n));
+
+        return nums.length ? nums : null;
+    }
     private toDateOrNull(v?: string): Date | null {
         if (!v) return null;
         const d = new Date(v);
         return isNaN(d.getTime()) ? null : d;
     }
+
+
+
+
 
     async create(dto: CreateTaskDto): Promise<TaskEntity> {
         const id = dto.id?.trim() || randomUUID(); // dacă nu vine id, generăm
@@ -156,23 +180,74 @@ export class TasksService {
         if (!res.affected) throw new NotFoundException(`Task ${id} not found`);
     }
 
+    async reorderTasks(dto: ReorderTasksDto): Promise<{ ok: true; updated: number }> {
+        /* TODO WcaName nu se actualizeaza. Trebuie sters din entitate ca sa nu mai avem aceste probleme */
 
-
-
-    private parseWcaNos(v?: string | number[]): number[] | null {
-        if (!v) return null;
-
-        if (Array.isArray(v)) {
-            const nums = v.map(Number).filter(n => Number.isFinite(n));
-            return nums.length ? nums : null;
+        if (!dto?.lanes?.length) {
+            throw new BadRequestException('lanes is required');
         }
 
-        const nums = String(v)
-            .split(',')
-            .map(s => Number(s.trim()))
-            .filter(n => Number.isFinite(n));
+        const allTaskIds = dto.lanes.flatMap(l => l.taskIds ?? []);
+        const uniqueTaskIds = [...new Set(allTaskIds)];
 
-        return nums.length ? nums : null;
+        if (uniqueTaskIds.length !== allTaskIds.length) {
+            throw new BadRequestException('Duplicate task ids are not allowed in reorder payload');
+        }
+
+        return this.repo.manager.transaction(async manager => {
+            const repo = manager.getRepository(TaskEntity);
+
+            const existing = uniqueTaskIds.length
+                ? await repo.find({ where: { id: In(uniqueTaskIds) } })
+                : [];
+
+            const byId = new Map(existing.map(t => [t.id, t]));
+
+            const missingIds = uniqueTaskIds.filter(id => !byId.has(id));
+            if (missingIds.length) {
+                throw new BadRequestException(`Tasks not found: ${missingIds.join(', ')}`);
+            }
+
+            let updated = 0;
+
+            for (const lane of dto.lanes) {
+                const wcaNo = lane.wcaNo;
+
+                for (let i = 0; i < lane.taskIds.length; i++) {
+                    const taskId = lane.taskIds[i];
+                    const nextOrd = i + 1;
+
+                    const task = byId.get(taskId)!;
+
+                    const ordChanged = (task.ord ?? null) !== nextOrd;
+                    const wcaChanged = (task.wcaNo ?? null) !== wcaNo;
+
+                    if (!ordChanged && !wcaChanged) {
+                        continue;
+                    }
+
+                    await repo.update(
+                        { id: taskId },
+                        {
+                            ord: nextOrd,
+                            wcaNo,
+                        },
+                    );
+
+                    task.ord = nextOrd;
+                    task.wcaNo = wcaNo;
+                    updated++;
+                }
+            }
+
+            return { ok: true as const, updated };
+        });
     }
+
+
+
+
+
+
 
 }

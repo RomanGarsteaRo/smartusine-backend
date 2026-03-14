@@ -72,8 +72,20 @@ function normalizeNote(note?: string | null): string | null {
     return v.length ? v : null;
 }
 
+function normalizeNullableYmd(ymd: string | null | undefined, field: string): string | null {
+    if (ymd === null || ymd === undefined) return null;
+    return normalizeYmd(ymd, field);
+}
 
+function validateStartEnd(dtstart: string | null, dtend: string | null): void {
+    if (dtstart === null && dtend !== null) {
+        throw new BadRequestException(`dtend cannot be set when dtstart is null`);
+    }
 
+    if (dtstart !== null && dtend !== null && dtend <= dtstart) {
+        throw new BadRequestException(`dtend must be > dtstart (using [dtstart, dtend) convention)`);
+    }
+}
 
 
 
@@ -90,10 +102,10 @@ export class WorkUzineCalendarService {
 
 
     async getActiveForDay(dayYmd: string): Promise<WorkUzineCalendarEntity | null> {
-        const D = dayYmd.trim();
-        // (poți reutiliza normalizeYmd dacă vrei)
+        const D = normalizeYmd(dayYmd.trim(), 'day');
         const row = await this.repo.createQueryBuilder('c')
-            .where('c.dtstart <= :D', { D })
+            .where('c.dtstart IS NOT NULL')
+            .andWhere('c.dtstart <= :D', { D })
             .andWhere('(c.dtend IS NULL OR :D < c.dtend)', { D })
             .orderBy('c.dtstart', 'DESC')
             .addOrderBy('c.updatedAt', 'DESC')
@@ -119,7 +131,8 @@ export class WorkUzineCalendarService {
             if (toY <= fromY) throw new BadRequestException(`to must be > from`);
 
             return this.repo.createQueryBuilder('c')
-                .where('c.dtstart < :to', { to: toY })
+                .where('c.dtstart IS NOT NULL')
+                .andWhere('c.dtstart < :to', { to: toY })
                 .andWhere('(c.dtend IS NULL OR c.dtend > :from)', { from: fromY })
                 .orderBy('c.dtstart', 'DESC')
                 .addOrderBy('c.updatedAt', 'DESC')
@@ -127,13 +140,12 @@ export class WorkUzineCalendarService {
                 .getMany();
         }
 
-        return this.repo.find({
-            order: {
-                dtstart: 'DESC',
-                updatedAt: 'DESC',
-                id: 'DESC',
-            },
-        });
+        return this.repo.createQueryBuilder('c')
+            .orderBy('CASE WHEN c.dtstart IS NULL THEN 1 ELSE 0 END', 'ASC')
+            .addOrderBy('c.dtstart', 'DESC')
+            .addOrderBy('c.updatedAt', 'DESC')
+            .addOrderBy('c.id', 'DESC')
+            .getMany();
     }
 
 
@@ -148,12 +160,10 @@ export class WorkUzineCalendarService {
 
     async create(dto: CreateWorkUzineCalendarDto): Promise<WorkUzineCalendarEntity> {
         const week = normalizeAndValidateWeek(dto.week);
-        const dtstart = normalizeYmd(dto.dtstart, 'dtstart');
-        const dtend = dto.dtend ? normalizeYmd(dto.dtend, 'dtend') : null;
+        const dtstart = normalizeNullableYmd(dto.dtstart, 'dtstart');
+        const dtend = normalizeNullableYmd(dto.dtend, 'dtend');
 
-        if (dtend && dtend <= dtstart) {
-            throw new BadRequestException(`dtend must be > dtstart (using [dtstart, dtend) convention)`);
-        }
+        validateStartEnd(dtstart, dtend);
 
         const row = this.repo.create({
             name: dto.name.trim(),
@@ -177,16 +187,14 @@ export class WorkUzineCalendarService {
         const nextWeek = dto.week !== undefined ? normalizeAndValidateWeek(dto.week) : row.week;
 
         const nextStart = dto.dtstart !== undefined
-            ? normalizeYmd(dto.dtstart, 'dtstart')
+            ? normalizeNullableYmd(dto.dtstart, 'dtstart')
             : row.dtstart;
 
         const nextEnd = dto.dtend !== undefined
-            ? (dto.dtend === null ? null : normalizeYmd(dto.dtend, 'dtend'))
+            ? normalizeNullableYmd(dto.dtend, 'dtend')
             : row.dtend;
 
-        if (nextEnd && nextEnd <= nextStart) {
-            throw new BadRequestException(`dtend must be > dtstart (using [dtstart, dtend) convention)`);
-        }
+        validateStartEnd(nextStart, nextEnd);
 
         row.name = nextName;
         row.timezone = nextTz;
@@ -196,5 +204,19 @@ export class WorkUzineCalendarService {
         row.dtend = nextEnd;
 
         return this.repo.save(row);
+    }
+
+
+
+    async remove(id: number): Promise<{ ok: true; id: number }> {
+        const row = await this.getOne(id);
+
+        const normName = (row.name ?? '').trim().toUpperCase();
+        if (normName === 'DEFAULT') {
+            throw new BadRequestException(`DEFAULT calendar cannot be deleted`);
+        }
+
+        await this.repo.delete(id);
+        return { ok: true, id };
     }
 }

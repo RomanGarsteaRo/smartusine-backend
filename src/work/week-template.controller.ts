@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { WorkUzineCalendarService } from './week-template.service';
 import { CreateWorkUzineCalendarDto, UpdateWorkUzineCalendarDto } from './dto/week-template.dto';
 
@@ -40,5 +40,10 @@ export class WorkUzineCalendarController {
     @Put(':id')
     update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateWorkUzineCalendarDto) {
         return this.svc.update(id, dto);
+    }
+
+    @Delete(':id')
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.svc.remove(id);
     }
 }

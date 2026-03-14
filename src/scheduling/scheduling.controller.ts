@@ -1,6 +1,7 @@
 import { CncsService } from '../cncs/cncs.service';
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { TasksService } from '../tasks/tasks.service';
+import { ReorderTasksDto } from '../tasks/dto/reorder-tasks.dto';
 
 
 
@@ -37,12 +38,18 @@ export class SchedulingController {
             tasksByWca[key].sort((a, b) => (a.ord ?? 0) - (b.ord ?? 0));
         }
 
-        console.log("tasksByWca:", tasksByWca[10071].length);
+        // console.log("tasksByWca:", tasksByWca[10071].length);
 
         return {
             generatedAt: Date.now(),
             cncs,
             tasksByWca,
         };
+    }
+
+
+    @Post('reorder')
+    async reorder(@Body() dto: ReorderTasksDto) {
+        return this.tasks.reorderTasks(dto);
     }
 }
