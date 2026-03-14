@@ -2,7 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { OverrideEffect, WorkUzineOverrideEntity, WorkUzineOverrideTypeEntity } from './entities/work-override.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateUzineOverrideTypeDto, UpsertUzineOverrideBatchDto } from './dto/work-override.dto';
+import {
+    CreateUzineOverrideTypeDto,
+    UpdateUzineOverrideTypeDto,
+    UpsertUzineOverrideBatchDto,
+} from './dto/work-override.dto';
 
 
 
@@ -46,6 +50,39 @@ export class WorkDayOverrideService {
         } catch (e: any) {
             // duplicate key etc.
             throw new BadRequestException(`cannot create type '${name}'`);
+        }
+    }
+
+    async updateType(id: number, dto: UpdateUzineOverrideTypeDto): Promise<WorkUzineOverrideTypeEntity> {
+        const entity = await this.typeRepo.findOne({ where: { id } });
+        if (!entity) {
+            throw new NotFoundException(`override_type ${id} not found`);
+        }
+
+        const patch: Partial<WorkUzineOverrideTypeEntity> = {};
+
+        if (dto.name !== undefined) {
+            const name = (dto.name ?? '').trim();
+            if (!name) throw new BadRequestException('name required');
+            patch.name = name;
+        }
+
+        if (dto.effect !== undefined) {
+            patch.effect = dto.effect as OverrideEffect;
+        }
+
+        if (!Object.keys(patch).length) {
+            return entity;
+        }
+
+        try {
+            const merged = this.typeRepo.merge(entity, patch);
+            return await this.typeRepo.save(merged);
+        } catch (e: any) {
+            if (patch.name) {
+                throw new BadRequestException(`cannot update type '${patch.name}'`);
+            }
+            throw new BadRequestException('cannot update type');
         }
     }
 

@@ -1,6 +1,10 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { WorkDayOverrideService } from './work-override.service';
-import { CreateUzineOverrideTypeDto, UpsertUzineOverrideBatchDto } from './dto/work-override.dto';
+import {
+    CreateUzineOverrideTypeDto,
+    UpdateUzineOverrideTypeDto,
+    UpsertUzineOverrideBatchDto,
+} from './dto/work-override.dto';
 
 
 
@@ -22,6 +26,14 @@ export class WorkDayOverrideController {
     @Post('types')
     createType(@Body() dto: CreateUzineOverrideTypeDto) {
         return this.svc.createType(dto);
+    }
+
+    @Patch('types/:id')
+    updateType(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() dto: UpdateUzineOverrideTypeDto,
+    ) {
+        return this.svc.updateType(id, dto);
     }
 
     @Delete('types/:id')

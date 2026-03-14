@@ -10,11 +10,14 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { OverrideEffect } from '../entities/work-override.entity';
+import { PartialType } from '@nestjs/mapped-types';
 
 
 
 
 
+
+/* TYPES ............. */
 export class CreateUzineOverrideTypeDto {
     @IsString()
     @IsNotEmpty()
@@ -24,8 +27,15 @@ export class CreateUzineOverrideTypeDto {
     effect!: OverrideEffect;
 }
 
+export class UpdateUzineOverrideTypeDto extends PartialType(CreateUzineOverrideTypeDto) {}
 
 
+
+
+
+
+
+/* OVERRIDE .......... */
 export class UpsertUzineOverrideDto {
     /** dacă vine, TypeORM save() face update; altfel insert */
     @IsOptional()
