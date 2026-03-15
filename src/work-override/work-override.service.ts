@@ -121,7 +121,6 @@ export class WorkDayOverrideService {
         const items = dto.items ?? [];
         if (!items.length) return [];
 
-        // validare business minimă
         for (const x of items) {
             const s = Math.floor(Number(x.startAbsMs));
             const e = Math.floor(Number(x.endAbsMs));
@@ -133,8 +132,6 @@ export class WorkDayOverrideService {
             }
         }
 
-        // optional: verificăm că typeId există (altfel FK error)
-        // (pt MVP e ok să lași DB să arunce, dar aici e mesaj mai clar)
         const typeIds = Array.from(new Set(items.map(i => i.typeId)));
         const types = await this.typeRepo.findByIds(typeIds as any);
         if (types.length !== typeIds.length) {
@@ -147,11 +144,31 @@ export class WorkDayOverrideService {
                 typeId: x.typeId,
                 startAbsMs: Math.floor(x.startAbsMs),
                 endAbsMs: Math.floor(x.endAbsMs),
-                name: (x.name ?? null),
-                note: (x.note ?? null),
+                name: x.name ?? null,
+                note: x.note ?? null,
             }),
         );
-        return this.repo.save(toSave);
+
+        const saved = await this.repo.save(toSave);
+
+        const ids = saved
+            .map(x => x.id)
+            .filter((id): id is number => Number.isFinite(id) && id > 0);
+
+        if (!ids.length) return [];
+
+        const full = await this.repo
+            .createQueryBuilder('o')
+            .leftJoinAndSelect('o.type', 't')
+            .where('o.id IN (:...ids)', { ids })
+            .getMany();
+
+        const byId = new Map<number, WorkUzineOverrideEntity>();
+        for (const it of full) byId.set(it.id, it);
+
+        return ids
+            .map(id => byId.get(id))
+            .filter((it): it is WorkUzineOverrideEntity => !!it);
     }
 
 
