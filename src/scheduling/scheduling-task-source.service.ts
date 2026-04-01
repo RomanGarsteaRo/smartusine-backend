@@ -3,6 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { TasksService } from '../tasks/tasks.service';
 import { mapRawToTask } from '../tasks/data/map-task';
 
+
+
+
+
+
+
+
 export type SchedulingTaskSourceMode = 'db' | 'remote';
 
 @Injectable()
@@ -20,7 +27,6 @@ export class SchedulingTaskSourceService {
         if (mode === 'remote') {
             return this.findFromRemote(uniqWcaNos);
         }
-
         return this.findFromDb(uniqWcaNos);
     }
 

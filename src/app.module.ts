@@ -14,6 +14,7 @@ import { WorkModule } from './work/work.module';
 import { WorkOverrideModule } from './work-override/work-override.module';
 import { WorkMachineCalendarModule } from './work-machine-calendar/module';
 import { WorkMachineOverrideModule } from './work-machine-override/work-machine-override.module';
+import { SchedulingV2Module } from './scheduling_v2/module';
 
 
 @Module({
@@ -37,6 +38,7 @@ import { WorkMachineOverrideModule } from './work-machine-override/work-machine-
         TasksModule,
         CncsModule,
         SchedulingModule,
+        SchedulingV2Module,
         WorkModule,
         WorkOverrideModule,
         WorkMachineCalendarModule,
