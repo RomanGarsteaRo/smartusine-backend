@@ -1,7 +1,7 @@
 import {
     Column,
     CreateDateColumn,
-    Entity,
+    Entity, Index,
     JoinColumn,
     ManyToOne,
     PrimaryGeneratedColumn,
@@ -20,8 +20,9 @@ export class WorkMachineOverrideEntity {
     @PrimaryGeneratedColumn({ type: 'int', unsigned: true })
     id!: number;
 
-    @Column({ name: 'cnc_id', type: 'varchar', length: 64 })
-    cncId!: string;
+    @Index('IDX_wmo_wca_no')
+    @Column({ name: 'wca_no', type: 'int', unsigned: true })
+    wcaNo!: number;
 
     @Column({ name: 'type_id', type: 'int', unsigned: true })
     typeId!: number;

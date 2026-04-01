@@ -20,8 +20,10 @@ import { WorkMachineOverrideService } from './work-machine-override.service';
 
 class FindWorkMachineOverrideQueryDto {
     @IsOptional()
-    @IsString()
-    cncId?: string;
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    wcaNo?: number;
 
     @IsOptional()
     @Type(() => Number)
@@ -40,14 +42,10 @@ class FindWorkMachineOverrideQueryDto {
     fromAbsMs?: number;
 }
 
-
 @Controller('work/machine-overrides')
 export class WorkMachineOverrideController {
-
     constructor(private readonly service: WorkMachineOverrideService) {}
 
-
-    /* TYPES */
     @Post('types')
     createType(@Body() dto: CreateWorkMachineOverrideTypeDto) {
         return this.service.createType(dto);
@@ -76,10 +74,6 @@ export class WorkMachineOverrideController {
         return this.service.removeType(id);
     }
 
-
-
-
-    /* OVERRIDES */
     @Post()
     create(@Body() dto: CreateWorkMachineOverrideDto) {
         return this.service.create(dto);
@@ -107,9 +101,5 @@ export class WorkMachineOverrideController {
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.service.remove(id);
     }
-
-
-
-
 }
 

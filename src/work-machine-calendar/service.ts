@@ -13,8 +13,6 @@ import { CreateWorkMachineCalendarDto, UpdateWorkMachineCalendarDto } from './dt
 
 
 
-
-
 function isValidYmd(ymd: string): boolean {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
     if (!m) return false;
@@ -51,10 +49,10 @@ function normalizeNullableYmd(
     return normalizeYmd(ymd, field);
 }
 
-function normalizeStr(note?: string | null): string | null {
-    if (note === null) return null;
-    const v = (note ?? '').trim();
-    return v.length ? v : null;
+function normalizeStr(v?: string | null): string | null {
+    if (v === null) return null;
+    const s = (v ?? '').trim();
+    return s.length ? s : null;
 }
 
 function validateStartEnd(dtstart: string | null, dtend: string | null): void {
@@ -69,48 +67,37 @@ function validateStartEnd(dtstart: string | null, dtend: string | null): void {
     }
 }
 
-function normalizeCncIds(cnc: string[] | undefined): string[] {
-    if (cnc === undefined || cnc === null) {
+function normalizeWcaNos(wcaNos: number[] | undefined): number[] {
+    if (wcaNos === undefined || wcaNos === null) {
         return [];
     }
 
-    if (!Array.isArray(cnc)) {
-        throw new BadRequestException(`cnc must be an array`);
+    if (!Array.isArray(wcaNos)) {
+        throw new BadRequestException(`wcaNos must be an array`);
     }
 
-    const normalized = cnc
-        .map(v => (v ?? '').trim())
-        .filter(v => v.length > 0);
+    const normalized = wcaNos
+        .map(v => Number(v))
+        .filter(v => Number.isInteger(v) && v > 0);
 
     return Array.from(new Set(normalized));
 }
 
-
-
-
-
-
-
-
-
-
 @Injectable()
 export class WorkMachineCalendarService {
-
-
     constructor(
         @InjectRepository(WorkMachineCalendarEntity)
         private readonly repo: Repository<WorkMachineCalendarEntity>,
     ) {}
 
-
-
-    async getActiveForDay(dayYmd: string, cncId: string): Promise<WorkMachineCalendarEntity | null> {
+    async getActiveForDay(
+        dayYmd: string,
+        wcaNo?: number,
+    ): Promise<WorkMachineCalendarEntity | null> {
         const D = normalizeYmd(dayYmd.trim(), 'day');
-        const cnc = (cncId ?? '').trim();
 
-        if (!cnc) {
-            throw new BadRequestException(`cncId is required`);
+        if (wcaNo == null || !Number.isInteger(wcaNo) || wcaNo <= 0) {
+            throw new BadRequestException(`wcaNo is required`);
         }
 
         const rows = await this.repo.createQueryBuilder('c')
@@ -122,21 +109,17 @@ export class WorkMachineCalendarService {
             .addOrderBy('c.id', 'DESC')
             .getMany();
 
-        return rows.find(r => Array.isArray(r.cnc) && r.cnc.includes(cnc)) ?? null;
+        return rows.find(r => Array.isArray(r.wcaNos) && r.wcaNos.includes(wcaNo)) ?? null;
     }
 
-    /**
-     * Dacă dai from/to => întoarce calendarele care intersectează [from, to)
-     * Opțional filtrează și după cncId.
-     */
     async list(range?: {
         from?: string;
         to?: string;
-        cncId?: string;
+        wcaNo?: number;
     }): Promise<WorkMachineCalendarEntity[]> {
         const from = range?.from?.trim();
         const to = range?.to?.trim();
-        const cncId = range?.cncId?.trim();
+        const wcaNo = range?.wcaNo;
 
         let rows: WorkMachineCalendarEntity[];
 
@@ -165,9 +148,8 @@ export class WorkMachineCalendarService {
                 .getMany();
         }
 
-        if (!cncId) return rows;
-
-        return rows.filter(r => Array.isArray(r.cnc) && r.cnc.includes(cncId));
+        if (wcaNo == null) return rows;
+        return rows.filter(r => Array.isArray(r.wcaNos) && r.wcaNos.includes(wcaNo));
     }
 
     async getOne(id: number): Promise<WorkMachineCalendarEntity> {
@@ -179,10 +161,10 @@ export class WorkMachineCalendarService {
     }
 
     async create(dto: CreateWorkMachineCalendarDto): Promise<WorkMachineCalendarEntity> {
-        const week = {...dto.week};
+        const week = { ...dto.week };
         const dtstart = normalizeNullableYmd(dto.dtstart, 'dtstart');
         const dtend = normalizeNullableYmd(dto.dtend, 'dtend');
-        const cnc = normalizeCncIds(dto.cnc);
+        const wcaNos = normalizeWcaNos(dto.wcaNos);
 
         validateStartEnd(dtstart, dtend);
 
@@ -190,7 +172,7 @@ export class WorkMachineCalendarService {
             name: normalizeStr(dto.name),
             note: normalizeStr(dto.note),
             timezone: (dto.timezone?.trim() || 'America/Montreal'),
-            cnc,
+            wcaNos,
             week,
             dtstart,
             dtend,
@@ -204,7 +186,7 @@ export class WorkMachineCalendarService {
 
         const nextName = dto.name === '' ? null : normalizeStr(dto.name);
         const nextTz = dto.timezone !== undefined ? dto.timezone.trim() : row.timezone;
-        const nextWeek = dto.week !== undefined ? {...dto.week} : row.week;
+        const nextWeek = dto.week !== undefined ? { ...dto.week } : row.week;
 
         const nextStart = dto.dtstart !== undefined
             ? normalizeNullableYmd(dto.dtstart, 'dtstart')
@@ -214,16 +196,16 @@ export class WorkMachineCalendarService {
             ? normalizeNullableYmd(dto.dtend, 'dtend')
             : row.dtend;
 
-        const nextCnc = dto.cnc !== undefined
-            ? normalizeCncIds(dto.cnc)
-            : row.cnc;
+        const nextWcaNos = dto.wcaNos !== undefined
+            ? normalizeWcaNos(dto.wcaNos)
+            : row.wcaNos;
 
         validateStartEnd(nextStart, nextEnd);
 
         row.name = nextName;
         row.note = dto.note !== undefined ? normalizeStr(dto.note) : row.note;
         row.timezone = nextTz;
-        row.cnc = nextCnc;
+        row.wcaNos = nextWcaNos;
         row.week = nextWeek;
         row.dtstart = nextStart;
         row.dtend = nextEnd;
@@ -232,7 +214,7 @@ export class WorkMachineCalendarService {
     }
 
     async remove(id: number): Promise<{ ok: true; id: number }> {
-        const row = await this.getOne(id);
+        await this.getOne(id);
         await this.repo.delete(id);
         return { ok: true, id };
     }

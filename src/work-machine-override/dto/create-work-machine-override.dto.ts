@@ -9,9 +9,10 @@ import {
 } from 'class-validator';
 
 export class CreateWorkMachineOverrideDto {
-    @IsString()
-    @Length(1, 64)
-    cncId!: string;
+    @Type(() => Number)
+    @IsInt()
+    @Min(1)
+    wcaNo!: number;
 
     @Type(() => Number)
     @IsInt()

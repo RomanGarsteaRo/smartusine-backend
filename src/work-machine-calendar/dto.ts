@@ -1,7 +1,7 @@
 import {
     ArrayUnique,
     IsArray,
-    IsInt,
+    IsInt, IsNumber,
     IsObject,
     IsOptional,
     IsString, Matches,
@@ -46,15 +46,12 @@ export class CreateWorkMachineCalendarDto {
     @IsString()
     timezone?: string;
 
-    /**
-     * Lista id-urilor CNC.
-     * Compatibil cu backendul actual: cnc_id este string.
-     */
+
     @IsOptional()
     @IsArray()
     @ArrayUnique()
-    @IsString({ each: true })
-    cnc!: string[];
+    @IsNumber({}, { each: true })
+    wcaNos!: number[];
 
     @IsObject()
     week!: WorkWeek;
@@ -73,7 +70,6 @@ export class CreateWorkMachineCalendarDto {
 }
 
 export class UpdateWorkMachineCalendarDto {
-
     @IsOptional()
     @ValidateIf((_, v) => v !== null && v !== undefined)
     @IsString()
@@ -90,8 +86,8 @@ export class UpdateWorkMachineCalendarDto {
     @IsOptional()
     @IsArray()
     @ArrayUnique()
-    @IsString({ each: true })
-    cnc?: string[];
+    @IsNumber({}, { each: true })
+    wcaNos?: number[];
 
     @IsOptional()
     @IsObject()
@@ -115,7 +111,7 @@ export class WorkMachineCalendarResponseDto {
     name!: string | null;
     note!: string | null;
     timezone!: string;
-    cnc!: string[];
+    wcaNos!: number[];
     week!: WorkWeek;
     dtstart!: string | null;
     dtend!: string | null;

@@ -14,8 +14,6 @@ import { WorkMachineOverrideTypeEntity } from './entities/work-machine-override-
 
 
 
-
-
 @Injectable()
 export class WorkMachineOverrideService {
     constructor(
@@ -23,14 +21,13 @@ export class WorkMachineOverrideService {
         private readonly overrideRepo: Repository<WorkMachineOverrideEntity>,
         @InjectRepository(WorkMachineOverrideTypeEntity)
         private readonly typeRepo: Repository<WorkMachineOverrideTypeEntity>,
-    ) {
-    }
+    ) {}
 
     async create(dto: CreateWorkMachineOverrideDto): Promise<WorkMachineOverrideEntity> {
         await this.ensureTypeExists(dto.typeId);
 
         const entity = this.overrideRepo.create({
-            cncId: dto.cncId,
+            wcaNo: dto.wcaNo,
             typeId: dto.typeId,
             dtstartUtcMs: dto.dtstartUtcMs,
             durationMs: dto.durationMs,
@@ -45,7 +42,7 @@ export class WorkMachineOverrideService {
     }
 
     async findAll(filters?: {
-        cncId?: string;
+        wcaNo?: number;
         typeId?: number;
         isEnabled?: boolean;
         fromAbsMs?: number;
@@ -56,8 +53,8 @@ export class WorkMachineOverrideService {
             .orderBy('wmo.dtstartUtcMs', 'ASC')
             .addOrderBy('wmo.id', 'ASC');
 
-        if (filters?.cncId) {
-            qb.andWhere('wmo.cncId = :cncId', { cncId: filters.cncId });
+        if (typeof filters?.wcaNo === 'number') {
+            qb.andWhere('wmo.wcaNo = :wcaNo', { wcaNo: filters.wcaNo });
         }
 
         if (typeof filters?.typeId === 'number') {
@@ -74,9 +71,7 @@ export class WorkMachineOverrideService {
             qb.andWhere(
                 new Brackets((sub) => {
                     sub
-                        // recurrent rules: keep them available; later they will be expanded client/server side
                         .where('wmo.rrule IS NOT NULL')
-                        // single-shot items that still intersect [fromAbsMs, +inf)
                         .orWhere('(wmo.dtstartUtcMs + wmo.durationMs) >= :fromAbsMs', { fromAbsMs });
                 }),
             );
@@ -101,7 +96,7 @@ export class WorkMachineOverrideService {
             entity.typeId = dto.typeId;
         }
 
-        if (dto.cncId != null) entity.cncId = dto.cncId;
+        if (dto.wcaNo != null) entity.wcaNo = dto.wcaNo;
         if (dto.dtstartUtcMs != null) entity.dtstartUtcMs = dto.dtstartUtcMs;
         if (dto.durationMs != null) entity.durationMs = dto.durationMs;
         if (dto.rrule !== undefined) entity.rrule = dto.rrule ?? null;

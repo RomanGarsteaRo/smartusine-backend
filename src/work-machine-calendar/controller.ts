@@ -2,6 +2,12 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query } 
 import { WorkMachineCalendarService } from './service';
 import { CreateWorkMachineCalendarDto, UpdateWorkMachineCalendarDto } from './dto';
 
+function parseOptionalWcaNo(raw?: string): number | undefined {
+    if (raw == null || raw.trim() === '') return undefined;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : undefined;
+}
+
 @Controller('work/machine-calendars')
 export class WorkMachineCalendarController {
     constructor(private readonly svc: WorkMachineCalendarService) {}
@@ -9,20 +15,22 @@ export class WorkMachineCalendarController {
     @Get('active')
     getActive(
         @Query('day') day?: string,
-        @Query('cncId') cncId?: string,
+        @Query('wcaNo') wcaNoRaw?: string,
     ) {
-        // /work/machine-calendars/active?day=2026-02-17&cncId=CNC-01
-        return this.svc.getActiveForDay(day ?? '', cncId ?? '');
+        return this.svc.getActiveForDay(day ?? '', parseOptionalWcaNo(wcaNoRaw));
     }
 
     @Get()
     list(
         @Query('from') from?: string,
         @Query('to') to?: string,
-        @Query('cncId') cncId?: string,
+        @Query('wcaNo') wcaNoRaw?: string,
     ) {
-        // /work/machine-calendars?from=2026-02-01&to=2026-03-01&cncId=CNC-01
-        return this.svc.list({ from, to, cncId });
+        return this.svc.list({
+            from,
+            to,
+            wcaNo: parseOptionalWcaNo(wcaNoRaw),
+        });
     }
 
     @Get(':id')

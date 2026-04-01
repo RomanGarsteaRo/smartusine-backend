@@ -10,7 +10,7 @@ CREATE TABLE `work_machine_calendar` (
   `name` varchar(120) NULL,
   `note` text NULL,
   `timezone` varchar(64) NOT NULL DEFAULT 'America/Montreal',
-  `cnc` longtext NOT NULL,
+  `wcaNos` longtext NOT NULL,
   `week` longtext NOT NULL,
   `dtstart` date NULL,
   `dtend` date NULL,
@@ -51,8 +51,8 @@ export class WorkMachineCalendarEntity {
     note!: string | null;
 
 
-    @Column({ type: 'simple-json', name: 'cnc' })
-    cnc!: string[];
+    @Column({ type: 'simple-json', name: 'wcaNos' })
+    wcaNos!: number[];
 
 
     @Column({ type: 'simple-json', name: 'week' })
