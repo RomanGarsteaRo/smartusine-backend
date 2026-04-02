@@ -12,6 +12,8 @@ export interface SchedulingSnapshotDto {
 export interface SchedulingLineDto {
     wcaNo: number;
     wcaName: string;
+    cncName: string;
+    activeAxes: string;
     taskIds: string[];
 }
 

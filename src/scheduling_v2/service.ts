@@ -12,6 +12,8 @@ const MS_PER_HOUR = 3_600_000;
 type RemoteWcaRaw = {
     WCA_NO?: unknown;
     WCA_NAME?: unknown;
+    CncName?: unknown;
+    activeaxes?: unknown;
 };
 
 
@@ -56,6 +58,8 @@ export class SchedulingV2Service {
             return {
                 wcaNo: line.wcaNo,
                 wcaName: line.wcaName,
+                cncName: line.cncName,
+                activeAxes: line.activeAxes,
                 taskIds: lineTasks.map(t => t.id),
             };
         });
@@ -112,11 +116,16 @@ export class SchedulingV2Service {
 
     private mapLine(raw: RemoteWcaRaw): SchedulingLineDto | null {
         const wcaNo = this.toNum(raw?.WCA_NO, null);
+        const wcaName= this.toStr(raw?.WCA_NAME);
+        const cncName = this.toStr(raw?.CncName);
+        const activeAxes = this.toStr(raw?.activeaxes);
         if (wcaNo == null) return null;
 
         return {
             wcaNo,
-            wcaName: this.toStr(raw?.WCA_NAME),
+            wcaName,
+            cncName,
+            activeAxes,
             taskIds: [],
         };
     }
@@ -147,6 +156,10 @@ export class SchedulingV2Service {
 
         const fab_workTotalMs = qty_toMake * fab_cycleNetMs + fab_setupMs;
         const fab_workLeftMs = qty_left * fab_cycleNetMs + (qty_made > 0 ? 0 : fab_setupMs);
+
+        const deadlineMs = this.toEpochMs(raw?.dateRequis);
+        const deadlineOffsetMs = 2*24*60*60*1000; /* Two Days */
+        const fab_deadlineMs = deadlineMs ? deadlineMs - deadlineOffsetMs : null;
 
         const flags: SchedulingTaskFlagsDto = {
             green: !!raw?.statGreen,
@@ -182,7 +195,7 @@ export class SchedulingV2Service {
             fab_setupMs,
             fab_workTotalMs,
             fab_workLeftMs,
-            fab_deadlineMs: this.toEpochMs(raw?.dateRequis),
+            fab_deadlineMs,
 
             ord: this.toNum(raw?.ord, 0)!,
             status: this.toNum(raw?.statTask ?? raw?.status, 0)!,
@@ -211,7 +224,8 @@ export class SchedulingV2Service {
         if (typeof value === 'number' && Number.isFinite(value)) return value;
         if (value instanceof Date) {
             const ms = value.getTime();
-            return Number.isFinite(ms) ? ms : null;
+            /*  -2 days (2*24*60*60*1000) SPEC  */
+            return Number.isFinite(ms) ? ms - 2*24*60*60*1000 : null;
         }
 
         const d = new Date(String(value));
