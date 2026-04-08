@@ -42,6 +42,16 @@ export function getSchedulingRemoteTimeoutMs(config: ConfigService): number {
  *   .......................................................
  *   Invoke-RestMethod http://localhost:3000/dev/sync/status
  *
+ *  "{  "enabled": true,            // endpoint-urile dev sync sunt active
+ *      "schedulingSource": "db",   // snapshot-ul trebuie să lucreze din DB-ul tău local
+ *      "db": {
+ *          "tasks": 206,
+ *          "cncs": 11 },
+ *      "remote": { "tasksUrl": "http://10.0.0.62:1880/usinage/all_jobs",
+ *                  "wcasUrl": "http://10.0.0.62:1880/usinage/all_wca",
+ *                  "timeoutMs": 15000 }
+ *   }"
+ *
  *
  *
  *
