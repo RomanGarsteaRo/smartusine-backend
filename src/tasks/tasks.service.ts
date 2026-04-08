@@ -175,6 +175,27 @@ export class TasksService {
             .execute();
     }
 
+
+    async deleteMissingExcept(ids: string[]): Promise<number> {
+        const keep = Array.from(new Set((ids ?? []).map(x => String(x ?? '').trim()).filter(Boolean)));
+        if (!keep.length) {
+            const res = await this.repo.createQueryBuilder().delete().from(TaskEntity).execute();
+            return res.affected ?? 0;
+        }
+
+        const res = await this.repo.createQueryBuilder()
+            .delete()
+            .from(TaskEntity)
+            .where('id NOT IN (:...keep)', { keep })
+            .execute();
+
+        return res.affected ?? 0;
+    }
+
+    async countAll(): Promise<number> {
+        return this.repo.count();
+    }
+
     async remove(id: string): Promise<void> {
         const res = await this.repo.delete({ id });
         if (!res.affected) throw new NotFoundException(`Task ${id} not found`);

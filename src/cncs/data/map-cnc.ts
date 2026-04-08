@@ -5,9 +5,9 @@ const toStr = (v: any) => (v === null || v === undefined ? null : String(v));
 
 export function mapRawToCnc(raw: Raw) {
     return {
-        cncId: String(raw?.CncId ?? '').trim(),
-        wcaNo: toNum(raw?.WCA_NO),
+        wcaNo: toNum(raw?.WCA_NO) ?? undefined,
+        wcaName: toStr(raw?.WCA_NAME),
         cncName: toStr(raw?.CncName),
-        activeAxes: toStr(raw?.ActiveAxes?.activeaxes),
+        activeAxes: toStr(raw?.activeaxes ?? raw?.ActiveAxes?.activeaxes),
     };
 }

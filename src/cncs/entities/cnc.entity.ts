@@ -1,14 +1,13 @@
-import { Column, Entity, Index, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('cncs')
 export class CncEntity {
 
-    @PrimaryColumn({ type: 'varchar', length: 64, name: 'cnc_id' })
-    cncId!: string;
+    @PrimaryColumn({ type: 'int', name: 'wca_no' })
+    wcaNo!: number;
 
-    @Index()
-    @Column({ type: 'int', nullable: true, name: 'wca_no' })
-    wcaNo?: number | null;
+    @Column({ type: 'varchar', length: 255, nullable: true, name: 'wca_name' })
+    wcaName?: string | null;
 
     @Column({ type: 'varchar', length: 255, nullable: true, name: 'cnc_name' })
     cncName?: string | null;

@@ -1,16 +1,13 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TasksService } from '../tasks/tasks.service';
 import { mapRawToTask } from '../tasks/data/map-task';
-
-
-
-
-
-
-
-
-export type SchedulingTaskSourceMode = 'db' | 'remote';
+import {
+    getSchedulingRemoteTasksUrl,
+    getSchedulingRemoteTimeoutMs,
+    getSchedulingSourceMode,
+} from '../_remote/source-mode';
+import { fetchRemoteJsonArray } from '../_remote/remote-fetch';
 
 @Injectable()
 export class SchedulingTaskSourceService {
@@ -23,16 +20,11 @@ export class SchedulingTaskSourceService {
         const uniqWcaNos = Array.from(new Set((wcaNos ?? []).filter((v): v is number => Number.isFinite(v))));
         if (!uniqWcaNos.length) return [];
 
-        const mode = this.getMode();
+        const mode = getSchedulingSourceMode(this.config);
         if (mode === 'remote') {
             return this.findFromRemote(uniqWcaNos);
         }
         return this.findFromDb(uniqWcaNos);
-    }
-
-    private getMode(): SchedulingTaskSourceMode {
-        const raw = (this.config.get<string>('SCHEDULING_TASK_SOURCE') ?? 'db').trim().toLowerCase();
-        return raw === 'remote' ? 'remote' : 'db';
     }
 
     private async findFromDb(wcaNos: number[]): Promise<any[]> {
@@ -46,48 +38,13 @@ export class SchedulingTaskSourceService {
     }
 
     private async findFromRemote(wcaNos: number[]): Promise<any[]> {
-        const url = (this.config.get<string>('SCHEDULING_REMOTE_TASKS_URL') ?? 'http://10.0.0.62:1880/usinage/all_jobs').trim();
-        const timeoutMs = this.getTimeoutMs();
+        const url = getSchedulingRemoteTasksUrl(this.config);
+        const timeoutMs = getSchedulingRemoteTimeoutMs(this.config);
+        const raw = await fetchRemoteJsonArray(url, timeoutMs, 'Remote scheduling task source');
+        const allow = new Set(wcaNos);
 
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: { 'accept': 'application/json' },
-                signal: controller.signal,
-            });
-
-            if (!response.ok) {
-                throw new ServiceUnavailableException(`Remote scheduling source failed: ${response.status} ${response.statusText}`);
-            }
-
-            const raw = await response.json();
-            if (!Array.isArray(raw)) {
-                throw new ServiceUnavailableException('Remote scheduling source did not return an array');
-            }
-
-            const allow = new Set(wcaNos);
-
-            return raw
-                .map((item: any) => mapRawToTask(item))
-                .filter((task: any) => task?.wcaNo != null && allow.has(Number(task.wcaNo)));
-        } catch (error: any) {
-            if (error?.name === 'AbortError') {
-                throw new ServiceUnavailableException(`Remote scheduling source timeout after ${timeoutMs}ms`);
-            }
-            if (error instanceof ServiceUnavailableException) {
-                throw error;
-            }
-            throw new ServiceUnavailableException(`Remote scheduling source unavailable: ${error?.message ?? 'unknown error'}`);
-        } finally {
-            clearTimeout(timer);
-        }
-    }
-
-    private getTimeoutMs(): number {
-        const raw = Number(this.config.get<string>('SCHEDULING_REMOTE_TIMEOUT_MS') ?? '15000');
-        return Number.isFinite(raw) && raw > 0 ? raw : 15000;
+        return raw
+            .map((item: any) => mapRawToTask(item))
+            .filter((task: any) => task?.wcaNo != null && allow.has(Number(task.wcaNo)));
     }
 }

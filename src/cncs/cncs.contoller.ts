@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query } from '@nestjs/common';
 import { CncsService } from './cncs.service';
 import { CreateCncDto } from './dto/create-cnc.dto';
 import { UpdateCncDto } from './dto/update-cnc.dto';
@@ -18,10 +18,9 @@ export class CncsController {
         return this.service.summary();
     }
 
-
-    @Get(':cncId')
-    findOne(@Param('cncId') cncKey: string) {
-        return this.service.findOne(cncKey);
+    @Get(':wcaNo')
+    findOne(@Param('wcaNo', ParseIntPipe) wcaNo: number) {
+        return this.service.findOne(wcaNo);
     }
 
     @Post()
@@ -29,14 +28,14 @@ export class CncsController {
         return this.service.create(dto);
     }
 
-    @Patch(':cncId')
-    update(@Param('cncId') cncKey: string, @Body() dto: UpdateCncDto) {
-        return this.service.update(cncKey, dto);
+    @Patch(':wcaNo')
+    update(@Param('wcaNo', ParseIntPipe) wcaNo: number, @Body() dto: UpdateCncDto) {
+        return this.service.update(wcaNo, dto);
     }
 
-    @Delete(':cncId')
-    remove(@Param('cncId') cncKey: string) {
-        return this.service.remove(cncKey);
+    @Delete(':wcaNo')
+    remove(@Param('wcaNo', ParseIntPipe) wcaNo: number) {
+        return this.service.remove(wcaNo);
     }
 
     @Post('bulk')

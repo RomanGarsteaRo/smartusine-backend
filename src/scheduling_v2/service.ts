@@ -1,31 +1,15 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from '@nestjs/common';
 import { SchedulingLineDto, SchedulingSnapshotDto, SchedulingTaskDto, SchedulingTaskFlagsDto } from './dto';
 import { SchedulingTaskSourceService } from '../scheduling/scheduling-task-source.service';
-
-
-
-
-
+import { SchedulingLineSourceService } from '../scheduling/scheduling-line-source.service';
 
 const MS_PER_HOUR = 3_600_000;
-type RemoteWcaRaw = {
-    WCA_NO?: unknown;
-    WCA_NAME?: unknown;
-    CncName?: unknown;
-    activeaxes?: unknown;
-};
-
-
-
-
-
 
 @Injectable()
 export class SchedulingV2Service {
     constructor(
-        private readonly config: ConfigService,
         private readonly schedulingTaskSource: SchedulingTaskSourceService,
+        private readonly schedulingLineSource: SchedulingLineSourceService,
     ) {
     }
 
@@ -72,62 +56,14 @@ export class SchedulingV2Service {
     }
 
     private async fetchLines(): Promise<SchedulingLineDto[]> {
-        const url = (this.config.get<string>('SCHEDULING_REMOTE_WCAS_URL') ?? 'http://10.0.0.62:1880/usinage/all_wca').trim();
-
-        const timeoutMs = this.getTimeoutMs();
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-        try {
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: { accept: 'application/json' },
-                signal: controller.signal,
-            });
-
-            if (!response.ok) {
-                throw new ServiceUnavailableException(
-                    `Remote WCA source failed: ${response.status} ${response.statusText}`,
-                );
-            }
-
-            const raw = await response.json();
-            if (!Array.isArray(raw)) {
-                throw new ServiceUnavailableException('Remote WCA source did not return an array');
-            }
-
-            return raw
-                .map((item: RemoteWcaRaw) => this.mapLine(item))
-                .filter((line): line is SchedulingLineDto => !!line);
-        } catch (error: any) {
-            if (error?.name === 'AbortError') {
-                throw new ServiceUnavailableException(`Remote WCA source timeout after ${timeoutMs}ms`);
-            }
-            if (error instanceof ServiceUnavailableException) {
-                throw error;
-            }
-            throw new ServiceUnavailableException(
-                `Remote WCA source unavailable: ${error?.message ?? 'unknown error'}`,
-            );
-        } finally {
-            clearTimeout(timer);
-        }
-    }
-
-    private mapLine(raw: RemoteWcaRaw): SchedulingLineDto | null {
-        const wcaNo = this.toNum(raw?.WCA_NO, null);
-        const wcaName= this.toStr(raw?.WCA_NAME);
-        const cncName = this.toStr(raw?.CncName);
-        const activeAxes = this.toStr(raw?.activeaxes);
-        if (wcaNo == null) return null;
-
-        return {
-            wcaNo,
-            wcaName,
-            cncName,
-            activeAxes,
+        const lines = await this.schedulingLineSource.findForScheduling();
+        return lines.map(line => ({
+            wcaNo: line.wcaNo,
+            wcaName: line.wcaName ?? '',
+            cncName: line.cncName ?? '',
+            activeAxes: line.activeAxes ?? '',
             taskIds: [],
-        };
+        }));
     }
 
     private mapTask(raw: any): SchedulingTaskDto | null {
@@ -174,14 +110,14 @@ export class SchedulingV2Service {
             id,
 
             wcaNo,
-            wcaName: this.toStr(raw?.wcaName),
+            wcaName: this.toStr(raw?.wcaName) ?? '',
 
-            clientName: this.toStr(raw?.clientName),
-            clientNo: this.toStr(raw?.clientNo),
-            jobNo: this.toStr(raw?.jobNo),
-            partNo: this.toStr(raw?.partNo),
+            clientName: this.toStr(raw?.clientName) ?? '',
+            clientNo: this.toStr(raw?.clientNo) ?? '',
+            jobNo: this.toStr(raw?.jobNo) ?? '',
+            partNo: this.toStr(raw?.partNo) ?? '',
             projectNo: this.toNum(raw?.projectNo, 0)!,
-            revNo: this.toStr(raw?.revNo),
+            revNo: this.toStr(raw?.revNo) ?? '',
 
             qty_toMake,
             qty_made,
@@ -205,34 +141,29 @@ export class SchedulingV2Service {
     private compareTasks(a: SchedulingTaskDto, b: SchedulingTaskDto): number {
         const ad = a.fab_deadlineMs ?? Number.POSITIVE_INFINITY;
         const bd = b.fab_deadlineMs ?? Number.POSITIVE_INFINITY;
-        return (ad - bd);
+        if (ad !== bd) return ad - bd;
+
+        const ao = a.ord ?? Number.POSITIVE_INFINITY;
+        const bo = b.ord ?? Number.POSITIVE_INFINITY;
+        if (ao !== bo) return ao - bo;
+
+        return a.id.localeCompare(b.id);
     }
 
-    private toNum(value: unknown, fallback: number | null): number | null {
-        if (value === null || value === undefined || value === '') return fallback;
-        const n = Number(value);
+    private toNum(v: unknown, fallback: number | null): number | null {
+        if (v === null || v === undefined || v === '') return fallback;
+        const n = Number(v);
         return Number.isFinite(n) ? n : fallback;
     }
 
-    private toStr(value: unknown): string {
-        return value === null || value === undefined ? '' : String(value);
+    private toStr(v: unknown): string | null {
+        return v === null || v === undefined ? null : String(v);
     }
 
-    private toEpochMs(value: unknown): number | null {
-        if (value === null || value === undefined || value === '') return null;
-        if (typeof value === 'number' && Number.isFinite(value)) return value;
-        if (value instanceof Date) {
-            const ms = value.getTime();
-            return Number.isFinite(ms) ? ms : null;
-        }
-
-        const d = new Date(String(value));
-        const ms = d.getTime();
-        return Number.isFinite(ms) ? ms : null;
-    }
-
-    private getTimeoutMs(): number {
-        const raw = Number(this.config.get<string>('SCHEDULING_REMOTE_TIMEOUT_MS') ?? '15000');
-        return Number.isFinite(raw) && raw > 0 ? raw : 15000;
+    private toEpochMs(v: unknown): number | null {
+        if (!v) return null;
+        const d = new Date(String(v));
+        const t = d.getTime();
+        return Number.isFinite(t) ? t : null;
     }
 }

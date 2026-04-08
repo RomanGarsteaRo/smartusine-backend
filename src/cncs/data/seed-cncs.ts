@@ -18,21 +18,17 @@ const ds = new DataSource({
     synchronize: false,
 });
 
-const cncIdOf = (r: any) => (r?.CncId ?? '').toString().trim();
-const tsOf = (r: any) => Number(r?.Timestamp ?? -1);
+const wcaNoOf = (r: any) => Number(r?.WCA_NO ?? NaN);
 
-function keepLatestPerCncId(raw: any[]) {
-    const m = new Map<string, any>();
+function keepLatestPerWcaNo(raw: any[]) {
+    const m = new Map<number, any>();
     for (const r of raw) {
-        const id = cncIdOf(r);
-        if (!id) continue;
-
-        const prev = m.get(id);
-        if (!prev || tsOf(r) > tsOf(prev)) m.set(id, r);
+        const wcaNo = wcaNoOf(r);
+        if (!Number.isFinite(wcaNo)) continue;
+        m.set(wcaNo, r);
     }
     return [...m.values()];
 }
-
 
 async function run() {
     await ds.initialize();
@@ -41,27 +37,25 @@ async function run() {
     const jsonPath = path.resolve(__dirname, 'cncs.json');
     const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf8')) as any[];
 
-    const rawFiltered = raw.filter(r => !!cncIdOf(r));
-    const rawLatest = keepLatestPerCncId(rawFiltered);
+    const rawFiltered = raw.filter(r => Number.isFinite(wcaNoOf(r)));
+    const rawLatest = keepLatestPerWcaNo(rawFiltered);
     const rows = rawLatest.map(mapRawToCnc);
 
-
     console.log('rows in json:', raw.length);
-    console.log('with CncId:', rawFiltered.length);
-    console.log('unique CncId latest:', rows.length);
-
+    console.log('with WCA_NO:', rawFiltered.length);
+    console.log('unique WCA_NO:', rows.length);
 
     await repo.createQueryBuilder()
         .insert()
         .into(CncEntity)
         .values(rows)
         .orUpdate(
-            ['wca_no', 'cnc_name', 'active_axes'],
-            ['cnc_id'],
+            ['wca_name', 'cnc_name', 'active_axes'],
+            ['wca_no'],
         )
         .execute();
 
-    console.log('✅ seed cncs (minimal) complet');
+    console.log('✅ seed cncs complet');
     await ds.destroy();
 }
 
