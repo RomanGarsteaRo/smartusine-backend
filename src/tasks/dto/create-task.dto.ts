@@ -29,6 +29,9 @@ export class CreateTaskDto {
     @IsOptional() @IsISO8601() startDate?: string;
     @IsOptional() @IsISO8601() endDate?: string;
 
+    // End-ul plasat manual pe timeline; deadline-ul rămâne separat.
+    @IsOptional() @IsNumber() placedEndMs?: number;
+
     @IsOptional() @IsNumber() estimPerPartTime?: number;
     @IsOptional() @IsNumber() estimPerPartTimeNet?: number;
 

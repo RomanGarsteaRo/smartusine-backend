@@ -95,6 +95,8 @@ export class SchedulingV2Service {
 
         const deadlineMs = this.toEpochMs(raw?.dateRequis);
         const fab_deadlineMs = deadlineMs ? deadlineMs : null;
+        const placedEndMs = this.toNum(raw?.placedEndMs ?? raw?.fab_placedEndMs, null);
+        const fab_placedEndMs = placedEndMs != null ? placedEndMs : null;
 
         const flags: SchedulingTaskFlagsDto = {
             green: !!raw?.statGreen,
@@ -131,6 +133,7 @@ export class SchedulingV2Service {
             fab_workTotalMs,
             fab_workLeftMs,
             fab_deadlineMs,
+            fab_placedEndMs,
 
             ord: this.toNum(raw?.ord, 0)!,
             status: this.toNum(raw?.statTask ?? raw?.status, 0)!,
@@ -139,8 +142,8 @@ export class SchedulingV2Service {
     }
 
     private compareTasks(a: SchedulingTaskDto, b: SchedulingTaskDto): number {
-        const ad = a.fab_deadlineMs ?? Number.POSITIVE_INFINITY;
-        const bd = b.fab_deadlineMs ?? Number.POSITIVE_INFINITY;
+        const ad = this.getSortEndMs(a);
+        const bd = this.getSortEndMs(b);
         if (ad !== bd) return ad - bd;
 
         const ao = a.ord ?? Number.POSITIVE_INFINITY;
@@ -148,6 +151,11 @@ export class SchedulingV2Service {
         if (ao !== bo) return ao - bo;
 
         return a.id.localeCompare(b.id);
+    }
+
+
+    private getSortEndMs(task: SchedulingTaskDto): number {
+        return task.fab_placedEndMs ?? task.fab_deadlineMs ?? Number.POSITIVE_INFINITY;
     }
 
     private toNum(v: unknown, fallback: number | null): number | null {

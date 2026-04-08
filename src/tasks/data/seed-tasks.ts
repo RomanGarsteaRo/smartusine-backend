@@ -63,6 +63,7 @@ async function run() {
                 'progress',
                 'start_date',
                 'end_date',
+                'placed_end_ms',
                 'estim_per_part_time',
                 'estim_per_part_time_net',
                 'date_requis',

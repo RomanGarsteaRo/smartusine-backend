@@ -32,6 +32,7 @@ PROGRESS	                progress	                progress
 
 START_DATE	                startDate	                start_date
 END_DATE	                endDate	                    end_date
+placedEndMs                 placedEndMs                 placed_end_ms
 
 ESTIM_PER_PART_TIME	        estimPerPartTime	        estim_per_part_time
 ESTIM_PER_PART_TIME_NET	    estimPerPartTimeNet	        estim_per_part_time_net
@@ -81,6 +82,7 @@ export function mapRawToTask(raw: Raw) {
 
         startDate: toDateOrNull(raw.START_DATE),
         endDate: toDateOrNull(raw.END_DATE),
+        placedEndMs: toNum(raw.placedEndMs ?? raw.fab_placedEndMs ?? raw.PLACED_END_MS) ?? null,
 
         estimPerPartTime: raw.ESTIM_PER_PART_TIME ?? null,
         estimPerPartTimeNet: raw.ESTIM_PER_PART_TIME_NET ?? null,

@@ -61,6 +61,10 @@ export class TaskEntity {
     @Column({ type: 'datetime', nullable: true, name: 'end_date' })
     endDate?: Date | null;
 
+    @Index()
+    @Column({ type: 'bigint', nullable: true, name: 'placed_end_ms' })
+    placedEndMs?: number | null;
+
     @Column({ type: 'decimal', precision: 10, scale: 5, nullable: true, name: 'estim_per_part_time' })
     estimPerPartTime?: number | null;
 
