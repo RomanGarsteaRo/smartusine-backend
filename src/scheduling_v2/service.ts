@@ -158,8 +158,7 @@ export class SchedulingV2Service {
         const fab_workLeftMs = qty_left * fab_cycleNetMs + (qty_made > 0 ? 0 : fab_setupMs);
 
         const deadlineMs = this.toEpochMs(raw?.dateRequis);
-        const deadlineOffsetMs = 2*24*60*60*1000; /* Two Days */
-        const fab_deadlineMs = deadlineMs ? deadlineMs - deadlineOffsetMs : null;
+        const fab_deadlineMs = deadlineMs ? deadlineMs : null;
 
         const flags: SchedulingTaskFlagsDto = {
             green: !!raw?.statGreen,
@@ -224,8 +223,7 @@ export class SchedulingV2Service {
         if (typeof value === 'number' && Number.isFinite(value)) return value;
         if (value instanceof Date) {
             const ms = value.getTime();
-            /*  -2 days (2*24*60*60*1000) SPEC  */
-            return Number.isFinite(ms) ? ms - 2*24*60*60*1000 : null;
+            return Number.isFinite(ms) ? ms : null;
         }
 
         const d = new Date(String(value));
