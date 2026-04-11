@@ -82,7 +82,8 @@ async function run() {
                 'stat_green',
                 'stat_orange',
                 'stat_white',
-                'fab_time_setup'
+                'fab_time_setup',
+                'parked_left'
             ],
             ['id']
         )

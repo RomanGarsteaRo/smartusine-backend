@@ -134,6 +134,7 @@ export class SchedulingV2Service {
             fab_workLeftMs,
             fab_deadlineMs,
             fab_placedEndMs,
+            parkedLeft: !!raw?.parkedLeft,
 
             ord: this.toNum(raw?.ord, 0)!,
             status: this.toNum(raw?.statTask ?? raw?.status, 0)!,

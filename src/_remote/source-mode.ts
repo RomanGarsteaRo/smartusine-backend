@@ -40,7 +40,7 @@ export function getSchedulingRemoteTimeoutMs(config: ConfigService): number {
  *
  *   PowerShell GET status
  *   .......................................................
- *   Invoke-RestMethod http://localhost:3000/dev/sync/status
+     Invoke-RestMethod http://localhost:3000/dev/sync/status
  *
  *  "{  "enabled": true,            // endpoint-urile dev sync sunt active
  *      "schedulingSource": "db",   // snapshot-ul trebuie să lucreze din DB-ul tău local
@@ -57,11 +57,11 @@ export function getSchedulingRemoteTimeoutMs(config: ConfigService): number {
  *
  *   PowerShell POST sync
  *   .......................................................
- *   Invoke-RestMethod `
- *       -Method POST `
- *       -Uri http://localhost:3000/dev/sync/scheduling `
- *       -ContentType "application/json" `
- *       -Body '{"replaceTasks":true,"replaceCncs":true}'
+     Invoke-RestMethod `
+         -Method POST `
+         -Uri http://localhost:3000/dev/sync/scheduling `
+         -ContentType "application/json" `
+         -Body '{"replaceTasks":true,"replaceCncs":true}'
  *
  *
  *

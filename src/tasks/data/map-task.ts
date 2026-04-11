@@ -45,6 +45,7 @@ SOUM_NO	                    soumNo	                    soum_no
 FAB_TIME	                fabTime	                    fab_time
 FAB_TIMES	                fabTimes	                fab_times
 FAB_TIME_SETUP	            fabTimeSetup	            fab_time_setup
+parkedLeft / PARKED_LEFT      parkedLeft                  parked_left
 timestamp	                timestamp	                timestamp
 
 ORD	                        ord	                        ord
@@ -108,5 +109,6 @@ export function mapRawToTask(raw: Raw) {
         statWhite: toBool(raw.StatWhite),
 
         fabTimeSetup: toNum(raw.FAB_TIME_SETUP) ?? null,
+        parkedLeft: toBool(raw.parkedLeft ?? raw.PARKED_LEFT ?? false),
     };
 }

@@ -55,6 +55,7 @@ export class TasksService {
             startDate: this.toDateOrNull(dto.startDate),
             endDate: this.toDateOrNull(dto.endDate),
             placedEndMs: dto.placedEndMs ?? null,
+            parkedLeft: dto.parkedLeft ?? false,
         });
         return this.repo.save(entity);
     }
@@ -115,6 +116,7 @@ export class TasksService {
             startDate: dto.startDate !== undefined ? this.toDateOrNull(dto.startDate) : existing.startDate,
             endDate: dto.endDate !== undefined ? this.toDateOrNull(dto.endDate) : existing.endDate,
             placedEndMs: dto.placedEndMs !== undefined ? dto.placedEndMs : existing.placedEndMs,
+            parkedLeft: dto.parkedLeft !== undefined ? dto.parkedLeft : existing.parkedLeft,
         });
 
         // 3) Salvează
@@ -125,8 +127,9 @@ export class TasksService {
         const ordChanged   = dto.ord      !== undefined && dto.ord      !== existing.ord;
         const wcaChanged   = dto.wcaNo    !== undefined && dto.wcaNo    !== existing.wcaNo;
         const statChanged  = dto.statTask !== undefined && dto.statTask !== existing.statTask;
+        const parkedLeftChanged = dto.parkedLeft !== undefined && dto.parkedLeft !== existing.parkedLeft;
 
-        if (ordChanged || wcaChanged || statChanged) {
+        if (ordChanged || wcaChanged || statChanged || parkedLeftChanged) {
             this.ws.emitStatusChanged(saved);
         }
 
@@ -141,7 +144,8 @@ export class TasksService {
         const affectsCount =
             wcaChanged ||
             (dto.ord !== undefined && dto.ord === -1) || // terminator
-            (dto.status !== undefined && dto.status !== existing.status);
+            (dto.status !== undefined && dto.status !== existing.status) ||
+            parkedLeftChanged;
 
         if (affectsCount) {
             this.ws.emitCountTasksChanged(saved);
@@ -158,6 +162,7 @@ export class TasksService {
             startDate: this.toDateOrNull(r.startDate),
             endDate: this.toDateOrNull(r.endDate),
             placedEndMs: r.placedEndMs ?? null,
+            parkedLeft: r.parkedLeft ?? false,
         }));
 
         await this.repo.createQueryBuilder()
@@ -171,7 +176,7 @@ export class TasksService {
                     'start_date','end_date','placed_end_ms','estim_per_part_time','estim_per_part_time_net',
                     'date_requis','no_comm','soum_no','fab_time','fab_times','timestamp',
                     'ord','stat_task','stat_prod','stat_red','stat_yell','stat_blue','stat_pink',
-                    'stat_green','stat_orange','stat_white','fab_time_setup'
+                    'stat_green','stat_orange','stat_white','fab_time_setup','parked_left'
                 ],
                 ['id'],
             )

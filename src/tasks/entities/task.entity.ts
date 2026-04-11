@@ -121,4 +121,7 @@ export class TaskEntity {
 
     @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'fab_time_setup' })
     fabTimeSetup?: number | null;
+
+    @Column({ type: 'tinyint', width: 1, default: 0, name: 'parked_left' })
+    parkedLeft!: boolean;
 }

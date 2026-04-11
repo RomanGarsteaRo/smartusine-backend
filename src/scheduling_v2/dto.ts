@@ -60,6 +60,7 @@ export interface SchedulingTaskDto {
   fab_workLeftMs: number;
   fab_deadlineMs: number | null;
   fab_placedEndMs: number | null;
+  parkedLeft: boolean;
 
   ord: number;
   status: number;

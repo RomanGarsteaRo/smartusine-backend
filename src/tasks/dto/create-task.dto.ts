@@ -57,4 +57,6 @@ export class CreateTaskDto {
     @IsOptional() @IsBoolean() statWhite?: boolean;
 
     @IsOptional() @IsNumber() fabTimeSetup?: number;
+
+    @IsOptional() @IsBoolean() parkedLeft?: boolean;
 }
