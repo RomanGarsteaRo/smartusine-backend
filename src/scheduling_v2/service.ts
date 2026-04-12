@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { SchedulingLineDto, SchedulingSnapshotDto, SchedulingTaskDto, SchedulingTaskFlagsDto } from './dto';
+import { SchedulingLineDto, SchedulingReorderTasksDto, SchedulingSnapshotDto, SchedulingTaskDto, SchedulingTaskFlagsDto, SchedulingUpdateDeadlineDto, SchedulingUpdateEndDateDto } from './dto';
 import { SchedulingTaskSourceService } from '../scheduling/scheduling-task-source.service';
 import { SchedulingLineSourceService } from '../scheduling/scheduling-line-source.service';
+import { TasksService } from '../tasks/tasks.service';
+import { taskEndDateToEpochMs } from '../tasks/data/task-end-date';
 
 const MS_PER_HOUR = 3_600_000;
 
@@ -10,6 +12,7 @@ export class SchedulingV2Service {
     constructor(
         private readonly schedulingTaskSource: SchedulingTaskSourceService,
         private readonly schedulingLineSource: SchedulingLineSourceService,
+        private readonly tasks: TasksService,
     ) {
     }
 
@@ -55,6 +58,28 @@ export class SchedulingV2Service {
         };
     }
 
+    async reorder(dto: SchedulingReorderTasksDto) {
+        return this.tasks.reorderTasks(dto as any);
+    }
+
+    async updateEndDate(dto: SchedulingUpdateEndDateDto) {
+        const saved = await this.tasks.updateSchedulingTaskEndDate(dto.id, dto.endDate ?? null);
+        return {
+            ok: true,
+            id: saved.id,
+            endDate: saved.endDate ? saved.endDate.toISOString() : null,
+        };
+    }
+
+    async updateDeadline(dto: SchedulingUpdateDeadlineDto) {
+        const saved = await this.tasks.updateSchedulingTaskDeadline(dto.id, dto.deadline ?? null);
+        return {
+            ok: true,
+            id: saved.id,
+            deadline: saved.dateRequis ?? null,
+        };
+    }
+
     private async fetchLines(): Promise<SchedulingLineDto[]> {
         const lines = await this.schedulingLineSource.findForScheduling();
         return lines.map(line => ({
@@ -95,8 +120,7 @@ export class SchedulingV2Service {
 
         const deadlineMs = this.toEpochMs(raw?.dateRequis);
         const fab_deadlineMs = deadlineMs ? deadlineMs : null;
-        const placedEndMs = this.toNum(raw?.placedEndMs ?? raw?.fab_placedEndMs, null);
-        const fab_placedEndMs = placedEndMs != null ? placedEndMs : null;
+        const fab_placedEndMs = taskEndDateToEpochMs(raw?.endDate ?? raw?.END_DATE);
 
         const flags: SchedulingTaskFlagsDto = {
             green: !!raw?.statGreen,

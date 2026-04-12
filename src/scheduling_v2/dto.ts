@@ -1,6 +1,5 @@
-
-
-
+import { ArrayMinSize, IsArray, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export interface SchedulingSnapshotDto {
     generatedAt: number;
@@ -65,4 +64,45 @@ export interface SchedulingTaskDto {
   ord: number;
   status: number;
   flags: SchedulingTaskFlagsDto;
+}
+
+
+export class SchedulingReorderLaneDto {
+    @IsOptional()
+    @IsString()
+    cncId?: string;
+
+    @IsInt()
+    wcaNo!: number;
+
+    @IsArray()
+    @ArrayMinSize(0)
+    @IsString({ each: true })
+    taskIds!: string[];
+}
+
+export class SchedulingReorderTasksDto {
+    @IsArray()
+    @ArrayMinSize(1)
+    @ValidateNested({ each: true })
+    @Type(() => SchedulingReorderLaneDto)
+    lanes!: SchedulingReorderLaneDto[];
+}
+
+export class SchedulingUpdateEndDateDto {
+    @IsString()
+    id!: string;
+
+    @IsOptional()
+    @IsString()
+    endDate?: string | null;
+}
+
+export class SchedulingUpdateDeadlineDto {
+    @IsString()
+    id!: string;
+
+    @IsOptional()
+    @IsString()
+    deadline?: string | null;
 }

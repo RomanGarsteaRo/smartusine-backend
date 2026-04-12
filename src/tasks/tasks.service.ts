@@ -8,6 +8,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { QueryTaskDto } from './dto/query-task.dto';
 import { SchedulingGateway } from '../web-socket/sheduling.gateway';
 import { ReorderTasksDto } from './dto/reorder-tasks.dto';
+import { normalizeTaskEndDateInput } from './data/task-end-date';
 
 @Injectable()
 export class TasksService {
@@ -43,6 +44,10 @@ export class TasksService {
         return isNaN(d.getTime()) ? null : d;
     }
 
+    private toSchedulingEndDateOrNull(v?: string | null): Date | null {
+        return normalizeTaskEndDateInput(v ?? null);
+    }
+
 
 
 
@@ -53,8 +58,9 @@ export class TasksService {
             ...dto,
             id,
             startDate: this.toDateOrNull(dto.startDate),
-            endDate: this.toDateOrNull(dto.endDate),
-            placedEndMs: dto.placedEndMs ?? null,
+            endDate: this.toSchedulingEndDateOrNull(dto.endDate),
+            // Deprecated transition field. Scheduling now uses END_DATE instead.
+            placedEndMs: null,
             parkedLeft: dto.parkedLeft ?? false,
         });
         return this.repo.save(entity);
@@ -114,8 +120,9 @@ export class TasksService {
         const patched = this.repo.merge(existing, {
             ...dto,
             startDate: dto.startDate !== undefined ? this.toDateOrNull(dto.startDate) : existing.startDate,
-            endDate: dto.endDate !== undefined ? this.toDateOrNull(dto.endDate) : existing.endDate,
-            placedEndMs: dto.placedEndMs !== undefined ? dto.placedEndMs : existing.placedEndMs,
+            endDate: dto.endDate !== undefined ? this.toSchedulingEndDateOrNull(dto.endDate) : existing.endDate,
+            // Deprecated transition field. Ignore writes and keep it cleared.
+            placedEndMs: null,
             parkedLeft: dto.parkedLeft !== undefined ? dto.parkedLeft : existing.parkedLeft,
         });
 
@@ -160,8 +167,9 @@ export class TasksService {
             ...r,
             id: r.id?.trim() || randomUUID(),
             startDate: this.toDateOrNull(r.startDate),
-            endDate: this.toDateOrNull(r.endDate),
-            placedEndMs: r.placedEndMs ?? null,
+            endDate: this.toSchedulingEndDateOrNull(r.endDate),
+            // Deprecated transition field. Always clear on sync/upsert.
+            placedEndMs: null,
             parkedLeft: r.parkedLeft ?? false,
         }));
 
@@ -207,6 +215,25 @@ export class TasksService {
     async remove(id: string): Promise<void> {
         const res = await this.repo.delete({ id });
         if (!res.affected) throw new NotFoundException(`Task ${id} not found`);
+    }
+
+    async updateSchedulingTaskEndDate(id: string, endDate: string | null | undefined): Promise<TaskEntity> {
+        const existing = await this.findOne(id);
+        existing.endDate = this.toSchedulingEndDateOrNull(endDate ?? null);
+        existing.placedEndMs = null;
+
+        const saved = await this.repo.save(existing);
+        this.ws.emitStatusBlueChanged();
+        return saved;
+    }
+
+    async updateSchedulingTaskDeadline(id: string, deadline: string | null | undefined): Promise<TaskEntity> {
+        const existing = await this.findOne(id);
+        existing.dateRequis = deadline == null || deadline === '' ? null : String(deadline).trim();
+
+        const saved = await this.repo.save(existing);
+        this.ws.emitStatusBlueChanged();
+        return saved;
     }
 
     async reorderTasks(dto: ReorderTasksDto): Promise<{ ok: true; updated: number }> {

@@ -1,4 +1,6 @@
 /* map-task.ts */
+import { normalizeTaskEndDateInput } from './task-end-date';
+
 type Raw = Record<string, any>;
 
 const oid = (raw: Raw) => raw?._id?.$oid ? String(raw._id.$oid) : String(raw._id ?? '');
@@ -82,8 +84,9 @@ export function mapRawToTask(raw: Raw) {
         progress: toNum(raw.PROGRESS) ?? undefined,
 
         startDate: toDateOrNull(raw.START_DATE),
-        endDate: toDateOrNull(raw.END_DATE),
-        placedEndMs: toNum(raw.placedEndMs ?? raw.fab_placedEndMs ?? raw.PLACED_END_MS) ?? null,
+        endDate: normalizeTaskEndDateInput(raw.END_DATE),
+        // Deprecated: timeline placement now uses END_DATE. Keep DB column for transition only.
+        placedEndMs: null,
 
         estimPerPartTime: raw.ESTIM_PER_PART_TIME ?? null,
         estimPerPartTimeNet: raw.ESTIM_PER_PART_TIME_NET ?? null,
