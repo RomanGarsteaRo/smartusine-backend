@@ -58,7 +58,7 @@ export interface SchedulingTaskDto {
   fab_workTotalMs: number;
   fab_workLeftMs: number;
   fab_deadlineMs: number | null;
-  fab_placedEndMs: number | null;
+  fab_endDateMs: number | null;
   parkedLeft: boolean;
 
   ord: number;

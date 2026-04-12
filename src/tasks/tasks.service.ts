@@ -59,8 +59,6 @@ export class TasksService {
             id,
             startDate: this.toDateOrNull(dto.startDate),
             endDate: this.toSchedulingEndDateOrNull(dto.endDate),
-            // Deprecated transition field. Scheduling now uses END_DATE instead.
-            placedEndMs: null,
             parkedLeft: dto.parkedLeft ?? false,
         });
         return this.repo.save(entity);
@@ -121,8 +119,6 @@ export class TasksService {
             ...dto,
             startDate: dto.startDate !== undefined ? this.toDateOrNull(dto.startDate) : existing.startDate,
             endDate: dto.endDate !== undefined ? this.toSchedulingEndDateOrNull(dto.endDate) : existing.endDate,
-            // Deprecated transition field. Ignore writes and keep it cleared.
-            placedEndMs: null,
             parkedLeft: dto.parkedLeft !== undefined ? dto.parkedLeft : existing.parkedLeft,
         });
 
@@ -168,8 +164,6 @@ export class TasksService {
             id: r.id?.trim() || randomUUID(),
             startDate: this.toDateOrNull(r.startDate),
             endDate: this.toSchedulingEndDateOrNull(r.endDate),
-            // Deprecated transition field. Always clear on sync/upsert.
-            placedEndMs: null,
             parkedLeft: r.parkedLeft ?? false,
         }));
 
@@ -181,7 +175,7 @@ export class TasksService {
                 [
                     'pjs_id','project_no','job_no','wca_no','wca_name','client_no','client_name',
                     'part_no','rev_no','sequence','status','qty_to_fab','qty_fab','progress',
-                    'start_date','end_date','placed_end_ms','estim_per_part_time','estim_per_part_time_net',
+                    'start_date','end_date','estim_per_part_time','estim_per_part_time_net',
                     'date_requis','no_comm','soum_no','fab_time','fab_times','timestamp',
                     'ord','stat_task','stat_prod','stat_red','stat_yell','stat_blue','stat_pink',
                     'stat_green','stat_orange','stat_white','fab_time_setup','parked_left'
@@ -220,7 +214,6 @@ export class TasksService {
     async updateSchedulingTaskEndDate(id: string, endDate: string | null | undefined): Promise<TaskEntity> {
         const existing = await this.findOne(id);
         existing.endDate = this.toSchedulingEndDateOrNull(endDate ?? null);
-        existing.placedEndMs = null;
 
         const saved = await this.repo.save(existing);
         this.ws.emitStatusBlueChanged();

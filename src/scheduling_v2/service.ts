@@ -120,7 +120,7 @@ export class SchedulingV2Service {
 
         const deadlineMs = this.toEpochMs(raw?.dateRequis);
         const fab_deadlineMs = deadlineMs ? deadlineMs : null;
-        const fab_placedEndMs = taskEndDateToEpochMs(raw?.endDate ?? raw?.END_DATE);
+        const fab_endDateMs = taskEndDateToEpochMs(raw?.endDate ?? raw?.END_DATE);
 
         const flags: SchedulingTaskFlagsDto = {
             green: !!raw?.statGreen,
@@ -157,7 +157,7 @@ export class SchedulingV2Service {
             fab_workTotalMs,
             fab_workLeftMs,
             fab_deadlineMs,
-            fab_placedEndMs,
+            fab_endDateMs,
             parkedLeft: !!raw?.parkedLeft,
 
             ord: this.toNum(raw?.ord, 0)!,
@@ -180,7 +180,7 @@ export class SchedulingV2Service {
 
 
     private getSortEndMs(task: SchedulingTaskDto): number {
-        return task.fab_placedEndMs ?? task.fab_deadlineMs ?? Number.POSITIVE_INFINITY;
+        return task.fab_endDateMs ?? task.fab_deadlineMs ?? Number.POSITIVE_INFINITY;
     }
 
     private toNum(v: unknown, fallback: number | null): number | null {
