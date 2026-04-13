@@ -6,7 +6,7 @@ import { DevSyncService } from './service';
 export class DevSyncController {
     constructor(private readonly service: DevSyncService) {}
 
-    @Get('status')
+    @Get(' ')
     status() {
         return this.service.getStatus();
     }

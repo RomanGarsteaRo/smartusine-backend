@@ -23,13 +23,14 @@ export class SchedulingV2Controller {
         return this.service.reorder(dto);
     }
 
-    @Post('tasks/update-end-date')
-    async updateEndDate(@Body() dto: SchedulingUpdateEndDateDto) {
-        return this.service.updateEndDate(dto);
-    }
 
     @Post('tasks/update-deadline')
     async updateDeadline(@Body() dto: SchedulingUpdateDeadlineDto) {
         return this.service.updateDeadline(dto);
+    }
+
+    @Post('tasks/update-end-date')
+    async updateEndDate(@Body() dto: SchedulingUpdateEndDateDto) {
+        return this.service.updateEndDate(dto);
     }
 }
