@@ -1,6 +1,11 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { SchedulingV2Service } from './service';
-import { SchedulingReorderTasksDto, SchedulingUpdateDeadlineDto, SchedulingUpdateEndDateDto } from './dto';
+import {
+    SchedulingReorderByDeadlineDto,
+    SchedulingReorderTasksDto,
+    SchedulingUpdateDeadlineDto,
+    SchedulingUpdateEndDateDto,
+} from './dto';
 
 
 
@@ -18,9 +23,16 @@ export class SchedulingV2Controller {
         return this.service.snapshot();
     }
 
+    /* Drag & Drop */
     @Post('reorder')
     async reorder(@Body() dto: SchedulingReorderTasksDto) {
         return this.service.reorder(dto);
+    }
+
+    /* Reorder By Deadline */
+    @Post('reorder-by-deadline')
+    async reorderByDeadline(@Body() dto: SchedulingReorderByDeadlineDto) {
+        return this.service.reorderByDeadline(dto);
     }
 
 

@@ -229,6 +229,28 @@ export class TasksService {
         return saved;
     }
 
+    private toDeadlineSortMs(v: string | null | undefined): number {
+        if (!v) return Number.POSITIVE_INFINITY;
+        const t = new Date(String(v)).getTime();
+        return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+    }
+
+    private compareTasksForDeadlineOrd(a: TaskEntity, b: TaskEntity): number {
+        const aInProd = a.statTask === 1 ? 0 : 1;
+        const bInProd = b.statTask === 1 ? 0 : 1;
+        if (aInProd !== bInProd) return aInProd - bInProd;
+
+        const ad = this.toDeadlineSortMs(a.dateRequis ?? null);
+        const bd = this.toDeadlineSortMs(b.dateRequis ?? null);
+        if (ad !== bd) return ad - bd;
+
+        const ao = a.ord ?? Number.POSITIVE_INFINITY;
+        const bo = b.ord ?? Number.POSITIVE_INFINITY;
+        if (ao !== bo) return ao - bo;
+
+        return String(a.id).localeCompare(String(b.id));
+    }
+
     async reorderTasks(dto: ReorderTasksDto): Promise<{ ok: true; updated: number }> {
         /* TODO WcaName nu se actualizeaza. Trebuie sters din entitate ca sa nu mai avem aceste probleme */
 
@@ -264,26 +286,45 @@ export class TasksService {
 
                 for (let i = 0; i < lane.taskIds.length; i++) {
                     const taskId = lane.taskIds[i];
-                    const nextOrd = i + 1;
-
                     const task = byId.get(taskId)!;
 
-                    const ordChanged = (task.ord ?? null) !== nextOrd;
                     const wcaChanged = (task.wcaNo ?? null) !== wcaNo;
 
-                    if (!ordChanged && !wcaChanged) {
+                    /*
+                     * ORD persist is temporarily disabled.
+                     * Current business rule:
+                     * - visual order in timeline is driven by deadline
+                     * - ORD is synchronized only via /scheduling/v2/reorder-by-deadline
+                     * Keep the old ORD logic here for easy restore if client direction changes again.
+                     *
+                     * const nextOrd = i + 1;
+                     * const ordChanged = (task.ord ?? null) !== nextOrd;
+                     * if (!ordChanged && !wcaChanged) {
+                     *     continue;
+                     * }
+                     *
+                     * await repo.update(
+                     *     { id: taskId },
+                     *     {
+                     *         ord: nextOrd,
+                     *         wcaNo,
+                     *     },
+                     * );
+                     *
+                     * task.ord = nextOrd;
+                     * task.wcaNo = wcaNo;
+                     * updated++;
+                     */
+
+                    if (!wcaChanged) {
                         continue;
                     }
 
                     await repo.update(
                         { id: taskId },
-                        {
-                            ord: nextOrd,
-                            wcaNo,
-                        },
+                        { wcaNo },
                     );
 
-                    task.ord = nextOrd;
                     task.wcaNo = wcaNo;
                     updated++;
                 }
@@ -293,7 +334,57 @@ export class TasksService {
         });
     }
 
+    async reorderTasksByDeadline(
+        wcaNo: number,
+    ): Promise<{ ok: true; wcaNo: number; updated: number; taskIds: string[] }> {
 
+        if (!Number.isFinite(wcaNo)) {
+            throw new BadRequestException('wcaNo is required');
+        }
+
+        return this.repo.manager.transaction(async manager => {
+            const repo = manager.getRepository(TaskEntity);
+
+            const tasks = await repo.find({
+                where: { wcaNo },
+            });
+
+            if (!tasks.length) {
+                return {
+                    ok: true as const,
+                    wcaNo,
+                    updated: 0,
+                    taskIds: [],
+                };
+            }
+
+            const ordered = [...tasks].sort((a, b) => this.compareTasksForDeadlineOrd(a, b));
+
+            let updated = 0;
+
+            for (let i = 0; i < ordered.length; i++) {
+                const task = ordered[i];
+                const nextOrd = i + 1;
+
+                if ((task.ord ?? null) === nextOrd) continue;
+
+                await repo.update(
+                    { id: task.id },
+                    { ord: nextOrd },
+                );
+
+                task.ord = nextOrd;
+                updated++;
+            }
+
+            return {
+                ok: true as const,
+                wcaNo,
+                updated,
+                taskIds: ordered.map(t => t.id),
+            };
+        });
+    }
 
 
 

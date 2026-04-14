@@ -106,3 +106,8 @@ export class SchedulingUpdateDeadlineDto {
     @IsString()
     deadline?: string | null;
 }
+
+export class SchedulingReorderByDeadlineDto {
+    @IsInt()
+    wcaNo!: number;
+}

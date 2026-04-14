@@ -1,5 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { SchedulingLineDto, SchedulingReorderTasksDto, SchedulingSnapshotDto, SchedulingTaskDto, SchedulingTaskFlagsDto, SchedulingUpdateDeadlineDto, SchedulingUpdateEndDateDto } from './dto';
+import {
+    SchedulingLineDto,
+    SchedulingReorderByDeadlineDto,
+    SchedulingReorderTasksDto,
+    SchedulingSnapshotDto,
+    SchedulingTaskDto,
+    SchedulingTaskFlagsDto,
+    SchedulingUpdateDeadlineDto,
+    SchedulingUpdateEndDateDto,
+} from './dto';
 import { SchedulingTaskSourceService } from '../scheduling/scheduling-task-source.service';
 import { SchedulingLineSourceService } from '../scheduling/scheduling-line-source.service';
 import { TasksService } from '../tasks/tasks.service';
@@ -9,12 +18,15 @@ const MS_PER_HOUR = 3_600_000;
 
 @Injectable()
 export class SchedulingV2Service {
+
+
     constructor(
         private readonly schedulingTaskSource: SchedulingTaskSourceService,
         private readonly schedulingLineSource: SchedulingLineSourceService,
-        private readonly tasks: TasksService,
+        private readonly taskService: TasksService,
     ) {
     }
+
 
     async snapshot(): Promise<SchedulingSnapshotDto> {
         const lines = await this.fetchLines();
@@ -58,12 +70,18 @@ export class SchedulingV2Service {
         };
     }
 
+
+
     async reorder(dto: SchedulingReorderTasksDto) {
-        return this.tasks.reorderTasks(dto as any);
+        return this.taskService.reorderTasks(dto as any);
+    }
+    async reorderByDeadline(dto: SchedulingReorderByDeadlineDto) {
+        return this.taskService.reorderTasksByDeadline(dto.wcaNo);
     }
 
+
     async updateEndDate(dto: SchedulingUpdateEndDateDto) {
-        const saved = await this.tasks.updateSchedulingTaskEndDate(dto.id, dto.endDate ?? null);
+        const saved = await this.taskService.updateSchedulingTaskEndDate(dto.id, dto.endDate ?? null);
         return {
             ok: true,
             id: saved.id,
@@ -72,7 +90,7 @@ export class SchedulingV2Service {
     }
 
     async updateDeadline(dto: SchedulingUpdateDeadlineDto) {
-        const saved = await this.tasks.updateSchedulingTaskDeadline(dto.id, dto.deadline ?? null);
+        const saved = await this.taskService.updateSchedulingTaskDeadline(dto.id, dto.deadline ?? null);
         return {
             ok: true,
             id: saved.id,
