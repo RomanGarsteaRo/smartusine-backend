@@ -18,14 +18,12 @@ async function bootstrap() {
 
     /* TODO CORS în NestJS (dev vs prod)? */
     app.enableCors({
-        origin: [
-            'http://localhost:4200',
-            'http://10.0.0.133:4200',
-        ],
+        origin: true,
         credentials: false,
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
     });
 
-    app.enableCors({ origin: true, credentials: true });
     const port = process.env.PORT ? Number(process.env.PORT) : 3000;
     await app.listen(port, '0.0.0.0');
 }
