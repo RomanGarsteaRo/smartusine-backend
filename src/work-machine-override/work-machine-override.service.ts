@@ -92,8 +92,17 @@ export class WorkMachineOverrideService {
         const entity = await this.findOne(id);
 
         if (dto.typeId != null) {
-            await this.ensureTypeExists(dto.typeId);
-            entity.typeId = dto.typeId;
+            const type = await this.findOneType(dto.typeId);
+
+            /*
+             * IMPORTANT:
+             * Entity has both `typeId` column and eager `type` relation.
+             * When the entity is loaded, `type` contains the old relation object.
+             * If we change only `typeId`, TypeORM can keep saving the old relation.
+             * Therefore we update both sides explicitly.
+             */
+            entity.typeId = type.id;
+            entity.type = type;
         }
 
         if (dto.wcaNo != null) entity.wcaNo = dto.wcaNo;
