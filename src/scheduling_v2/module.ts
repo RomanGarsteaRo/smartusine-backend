@@ -5,9 +5,10 @@ import { SchedulingTaskSourceService } from '../scheduling/scheduling-task-sourc
 import { SchedulingLineSourceService } from '../scheduling/scheduling-line-source.service';
 import { SchedulingV2Service } from './service';
 import { SchedulingV2Controller } from './controller';
+import { ApplicationConfigModule } from '../app-config/module';
 
 @Module({
-    imports: [TasksModule, CncsModule],
+    imports: [TasksModule, CncsModule, ApplicationConfigModule],
     controllers: [SchedulingV2Controller],
     providers: [
         SchedulingV2Service,

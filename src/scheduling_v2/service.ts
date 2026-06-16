@@ -13,6 +13,7 @@ import { SchedulingTaskSourceService } from '../scheduling/scheduling-task-sourc
 import { SchedulingLineSourceService } from '../scheduling/scheduling-line-source.service';
 import { TasksService } from '../tasks/tasks.service';
 import { taskEndDateToEpochMs } from '../tasks/data/task-end-date';
+import { ApplicationConfigService, SchedulerLineOrderItem } from '../app-config/service';
 
 const MS_PER_HOUR = 3_600_000;
 
@@ -24,12 +25,17 @@ export class SchedulingV2Service {
         private readonly schedulingTaskSource: SchedulingTaskSourceService,
         private readonly schedulingLineSource: SchedulingLineSourceService,
         private readonly taskService: TasksService,
+        private readonly appConfig: ApplicationConfigService,
     ) {
     }
 
 
     async snapshot(): Promise<SchedulingSnapshotDto> {
-        const lines = await this.fetchLines();
+        const schedulerConfig = await this.appConfig.getSchedulerConfig();
+        const lines = this.sortLinesByConfiguredLineOrder(
+            await this.fetchLines(),
+            schedulerConfig.lineOrder,
+        );
         const wcaNos = lines.map(x => x.wcaNo);
 
         const rawTasks = await this.schedulingTaskSource.findForScheduling(wcaNos);
@@ -107,6 +113,32 @@ export class SchedulingV2Service {
             activeAxes: line.activeAxes ?? '',
             taskIds: [],
         }));
+    }
+
+
+    private sortLinesByConfiguredLineOrder(lines: SchedulingLineDto[], lineOrder: SchedulerLineOrderItem[]): SchedulingLineDto[] {
+        if (!lineOrder?.length) return lines;
+
+        const orderMap = new Map<number, number>();
+        lineOrder.forEach((item, index) => {
+            if (Number.isInteger(item.wcaNo) && !orderMap.has(item.wcaNo)) {
+                orderMap.set(item.wcaNo, index);
+            }
+        });
+
+        if (!orderMap.size) return lines;
+
+        return lines
+            .map((line, index) => ({ line, index }))
+            .sort((a, b) => {
+                const ai = orderMap.get(a.line.wcaNo) ?? Number.MAX_SAFE_INTEGER;
+                const bi = orderMap.get(b.line.wcaNo) ?? Number.MAX_SAFE_INTEGER;
+
+                if (ai !== bi) return ai - bi;
+
+                return a.index - b.index;
+            })
+            .map(x => x.line);
     }
 
     private mapTask(raw: any): SchedulingTaskDto | null {
