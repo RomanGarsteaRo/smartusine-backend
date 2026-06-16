@@ -1,5 +1,5 @@
 /* create-task.dto.ts */
-import { IsOptional, IsString, IsInt, IsNumber, IsBoolean, IsISO8601 } from 'class-validator';
+import { IsOptional, IsString, IsInt, IsNumber, IsBoolean, IsISO8601, Min, Max } from 'class-validator';
 
 export class CreateTaskDto {
 
@@ -53,6 +53,8 @@ export class CreateTaskDto {
     @IsOptional() @IsBoolean() statGreen?: boolean;
     @IsOptional() @IsBoolean() statOrange?: boolean;
     @IsOptional() @IsBoolean() statWhite?: boolean;
+
+    @IsOptional() @IsInt() @Min(0) @Max(2) urgencyLevel?: number;
 
     @IsOptional() @IsNumber() fabTimeSetup?: number;
 

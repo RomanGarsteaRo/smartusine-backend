@@ -81,6 +81,7 @@ async function run() {
                 'stat_green',
                 'stat_orange',
                 'stat_white',
+                'urgency_level',
                 'fab_time_setup',
                 'parked_left'
             ],

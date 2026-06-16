@@ -5,6 +5,7 @@ import {
     SchedulingReorderTasksDto,
     SchedulingUpdateDeadlineDto,
     SchedulingUpdateEndDateDto,
+    SchedulingUpdateUrgencyDto,
 } from './dto';
 
 
@@ -44,5 +45,10 @@ export class SchedulingV2Controller {
     @Post('tasks/update-end-date')
     async updateEndDate(@Body() dto: SchedulingUpdateEndDateDto) {
         return this.service.updateEndDate(dto);
+    }
+
+    @Post('tasks/update-urgency')
+    async updateUrgency(@Body() dto: SchedulingUpdateUrgencyDto) {
+        return this.service.updateUrgency(dto);
     }
 }

@@ -8,6 +8,7 @@ import {
     SchedulingTaskFlagsDto,
     SchedulingUpdateDeadlineDto,
     SchedulingUpdateEndDateDto,
+    SchedulingUpdateUrgencyDto,
 } from './dto';
 import { SchedulingTaskSourceService } from '../scheduling/scheduling-task-source.service';
 import { SchedulingLineSourceService } from '../scheduling/scheduling-line-source.service';
@@ -101,6 +102,15 @@ export class SchedulingV2Service {
             ok: true,
             id: saved.id,
             deadline: saved.dateRequis ?? null,
+        };
+    }
+
+    async updateUrgency(dto: SchedulingUpdateUrgencyDto) {
+        const saved = await this.taskService.updateSchedulingTaskUrgency(dto.id, dto.urgencyLevel);
+        return {
+            ok: true,
+            id: saved.id,
+            urgencyLevel: saved.urgencyLevel ?? 0,
         };
     }
 
@@ -209,6 +219,7 @@ export class SchedulingV2Service {
             fab_deadlineMs,
             fab_endDateMs,
             parkedLeft: !!raw?.parkedLeft,
+            urgencyLevel: this.toUrgencyLevel(raw?.urgencyLevel ?? raw?.urgency_level ?? raw?.URGENCY_LEVEL),
 
             ord: this.toNum(raw?.ord, 0)!,
             status: this.toNum(raw?.statTask ?? raw?.status, 0)!,
@@ -237,6 +248,12 @@ export class SchedulingV2Service {
         if (v === null || v === undefined || v === '') return fallback;
         const n = Number(v);
         return Number.isFinite(n) ? n : fallback;
+    }
+
+    private toUrgencyLevel(value: unknown): number {
+        const n = Number(value ?? 0);
+        if (!Number.isFinite(n)) return 0;
+        return Math.max(0, Math.min(2, Math.trunc(n)));
     }
 
     private toStr(v: unknown): string | null {

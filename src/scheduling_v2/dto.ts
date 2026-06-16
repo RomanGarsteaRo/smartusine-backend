@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ArrayMinSize, IsArray, IsInt, IsOptional, IsString, ValidateNested, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export interface SchedulingSnapshotDto {
@@ -60,6 +60,7 @@ export interface SchedulingTaskDto {
   fab_deadlineMs: number | null;
   fab_endDateMs: number | null;
   parkedLeft: boolean;
+  urgencyLevel: number;
 
   ord: number;
   status: number;
@@ -110,4 +111,14 @@ export class SchedulingUpdateDeadlineDto {
 export class SchedulingReorderByDeadlineDto {
     @IsInt()
     wcaNo!: number;
+}
+
+export class SchedulingUpdateUrgencyDto {
+    @IsString()
+    id!: string;
+
+    @IsInt()
+    @Min(0)
+    @Max(2)
+    urgencyLevel!: number;
 }

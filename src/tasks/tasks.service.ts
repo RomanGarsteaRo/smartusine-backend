@@ -48,6 +48,12 @@ export class TasksService {
         return normalizeTaskEndDateInput(v ?? null);
     }
 
+    private toUrgencyLevel(value: unknown): number {
+        const n = Number(value ?? 0);
+        if (!Number.isFinite(n)) return 0;
+        return Math.max(0, Math.min(2, Math.trunc(n)));
+    }
+
 
 
 
@@ -59,6 +65,7 @@ export class TasksService {
             id,
             startDate: this.toDateOrNull(dto.startDate),
             endDate: this.toSchedulingEndDateOrNull(dto.endDate),
+            urgencyLevel: this.toUrgencyLevel(dto.urgencyLevel),
             parkedLeft: dto.parkedLeft ?? false,
         });
         return this.repo.save(entity);
@@ -119,6 +126,7 @@ export class TasksService {
             ...dto,
             startDate: dto.startDate !== undefined ? this.toDateOrNull(dto.startDate) : existing.startDate,
             endDate: dto.endDate !== undefined ? this.toSchedulingEndDateOrNull(dto.endDate) : existing.endDate,
+            urgencyLevel: dto.urgencyLevel !== undefined ? this.toUrgencyLevel(dto.urgencyLevel) : existing.urgencyLevel,
             parkedLeft: dto.parkedLeft !== undefined ? dto.parkedLeft : existing.parkedLeft,
         });
 
@@ -138,7 +146,8 @@ export class TasksService {
 
         // “Albastru” – doar dacă s-a trimis câmpul și s-a schimbat efectiv
         const blueChanged = dto.statBlue !== undefined && dto.statBlue !== existing.statBlue;
-        if (blueChanged) {
+        const urgencyChanged = dto.urgencyLevel !== undefined && this.toUrgencyLevel(dto.urgencyLevel) !== (existing.urgencyLevel ?? 0);
+        if (blueChanged || urgencyChanged) {
             this.ws.emitStatusBlueChanged();
         }
 
@@ -164,6 +173,7 @@ export class TasksService {
             id: r.id?.trim() || randomUUID(),
             startDate: this.toDateOrNull(r.startDate),
             endDate: this.toSchedulingEndDateOrNull(r.endDate),
+            urgencyLevel: this.toUrgencyLevel(r.urgencyLevel),
             parkedLeft: r.parkedLeft ?? false,
         }));
 
@@ -178,7 +188,7 @@ export class TasksService {
                     'start_date','end_date','estim_per_part_time','estim_per_part_time_net',
                     'date_requis','no_comm','soum_no','fab_time','fab_times','timestamp',
                     'ord','stat_task','stat_prod','stat_red','stat_yell','stat_blue','stat_pink',
-                    'stat_green','stat_orange','stat_white','fab_time_setup','parked_left'
+                    'stat_green','stat_orange','stat_white','urgency_level','fab_time_setup','parked_left'
                 ],
                 ['id'],
             )
@@ -223,6 +233,15 @@ export class TasksService {
     async updateSchedulingTaskDeadline(id: string, deadline: string | null | undefined): Promise<TaskEntity> {
         const existing = await this.findOne(id);
         existing.dateRequis = deadline == null || deadline === '' ? null : String(deadline).trim();
+
+        const saved = await this.repo.save(existing);
+        this.ws.emitStatusBlueChanged();
+        return saved;
+    }
+
+    async updateSchedulingTaskUrgency(id: string, urgencyLevel: number | null | undefined): Promise<TaskEntity> {
+        const existing = await this.findOne(id);
+        existing.urgencyLevel = this.toUrgencyLevel(urgencyLevel);
 
         const saved = await this.repo.save(existing);
         this.ws.emitStatusBlueChanged();

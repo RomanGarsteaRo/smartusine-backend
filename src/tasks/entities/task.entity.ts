@@ -115,6 +115,9 @@ export class TaskEntity {
     @Column({ type: 'tinyint', width: 1, default: 0, name: 'stat_white' })
     statWhite!: boolean;
 
+    @Column({ type: 'tinyint', default: 0, name: 'urgency_level' })
+    urgencyLevel!: number;
+
     @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'fab_time_setup' })
     fabTimeSetup?: number | null;
 
