@@ -11,11 +11,6 @@ const toDateOrNull = (v: any): Date | null => {
     const d = new Date(v);
     return isNaN(d.getTime()) ? null : d;
 };
-const toUrgencyLevel = (v: any): number => {
-    const n = Number(v ?? 0);
-    if (!Number.isFinite(n)) return 0;
-    return Math.max(0, Math.min(2, Math.trunc(n)));
-};
 
 /******************************************************************************
 JSON original	            Entitate TS (proprietate)	Coloană DB (name)
@@ -63,7 +58,6 @@ StatPink	                statPink	                stat_pink
 StatGreen	                statGreen	                stat_green
 StatOrange	                statOrange	                stat_orange
 StatWhite	                statWhite	                stat_white
-URGENCY_LEVEL / urgencyLevel	urgencyLevel	            urgency_level
 
 *******************************************************************************/
 
@@ -113,7 +107,6 @@ export function mapRawToTask(raw: Raw) {
         statOrange: toBool(raw.StatOrange),
         statWhite: toBool(raw.StatWhite),
 
-        urgencyLevel: toUrgencyLevel(raw.URGENCY_LEVEL ?? raw.urgencyLevel ?? raw.urgency_level),
 
         fabTimeSetup: toNum(raw.FAB_TIME_SETUP) ?? null,
         parkedLeft: toBool(raw.parkedLeft ?? raw.PARKED_LEFT ?? false),

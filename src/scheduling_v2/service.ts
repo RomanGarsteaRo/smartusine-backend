@@ -15,6 +15,7 @@ import { SchedulingLineSourceService } from '../scheduling/scheduling-line-sourc
 import { TasksService } from '../tasks/tasks.service';
 import { taskEndDateToEpochMs } from '../tasks/data/task-end-date';
 import { ApplicationConfigService, SchedulerLineOrderItem } from '../app-config/service';
+import { SchedulingTaskStateService } from './task-state.service';
 
 const MS_PER_HOUR = 3_600_000;
 
@@ -27,6 +28,7 @@ export class SchedulingV2Service {
         private readonly schedulingLineSource: SchedulingLineSourceService,
         private readonly taskService: TasksService,
         private readonly appConfig: ApplicationConfigService,
+        private readonly taskStateService: SchedulingTaskStateService,
     ) {
     }
 
@@ -40,12 +42,19 @@ export class SchedulingV2Service {
         const wcaNos = lines.map(x => x.wcaNo);
 
         const rawTasks = await this.schedulingTaskSource.findForScheduling(wcaNos);
+        const urgencyByTaskId = await this.taskStateService.findUrgencyMap(
+            rawTasks
+                .map((raw: any) => this.toStr(raw?.id))
+                .filter((id): id is string => !!id),
+        );
         const tasksByWca = new Map<number, SchedulingTaskDto[]>();
 
         for (const raw of rawTasks) {
             const task = this.mapTask(raw);
             if (!task) continue;
             if (!wcaNos.includes(task.wcaNo)) continue;
+
+            task.urgencyLevel = urgencyByTaskId.get(task.id) ?? 0;
 
             const bucket = tasksByWca.get(task.wcaNo) ?? [];
             bucket.push(task);
@@ -106,10 +115,10 @@ export class SchedulingV2Service {
     }
 
     async updateUrgency(dto: SchedulingUpdateUrgencyDto) {
-        const saved = await this.taskService.updateSchedulingTaskUrgency(dto.id, dto.urgencyLevel);
+        const saved = await this.taskStateService.updateUrgency(dto.id, dto.urgencyLevel);
         return {
             ok: true,
-            id: saved.id,
+            id: saved.taskId,
             urgencyLevel: saved.urgencyLevel ?? 0,
         };
     }
@@ -219,7 +228,7 @@ export class SchedulingV2Service {
             fab_deadlineMs,
             fab_endDateMs,
             parkedLeft: !!raw?.parkedLeft,
-            urgencyLevel: this.toUrgencyLevel(raw?.urgencyLevel ?? raw?.urgency_level ?? raw?.URGENCY_LEVEL),
+            urgencyLevel: 0,
 
             ord: this.toNum(raw?.ord, 0)!,
             status: this.toNum(raw?.statTask ?? raw?.status, 0)!,
@@ -250,11 +259,6 @@ export class SchedulingV2Service {
         return Number.isFinite(n) ? n : fallback;
     }
 
-    private toUrgencyLevel(value: unknown): number {
-        const n = Number(value ?? 0);
-        if (!Number.isFinite(n)) return 0;
-        return Math.max(0, Math.min(2, Math.trunc(n)));
-    }
 
     private toStr(v: unknown): string | null {
         return v === null || v === undefined ? null : String(v);
