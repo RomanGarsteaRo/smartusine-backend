@@ -70,8 +70,7 @@ export class ApplicationConfigService {
 
     async getSchedulerConfig(): Promise<SchedulerConfig> {
         try {
-            const row = await this.repo.findOne({ where: { configKey: SCHEDULER_CONFIG_KEY } });
-            const value = this.toObject(row?.configValue);
+            const value = await this.getSchedulerConfigValue();
             const lineOrder = this.toLineOrderArray(value?.lineOrder);
 
             return {
@@ -83,6 +82,28 @@ export class ApplicationConfigService {
                 lineOrder: this.defaultLineOrder(),
             };
         }
+    }
+
+    async setSchedulerLineOrder(lineOrder: SchedulerLineOrderItem[]): Promise<SchedulerConfig> {
+        const nextLineOrder = this.toLineOrderArray(lineOrder);
+        const value = await this.getSchedulerConfigValue();
+
+        const nextValue: SchedulerConfig = {
+            ...value,
+            lineOrder: nextLineOrder.length ? nextLineOrder : this.defaultLineOrder(),
+        };
+
+        await this.repo.save(this.repo.create({
+            configKey: SCHEDULER_CONFIG_KEY,
+            configValue: nextValue,
+        }));
+
+        return this.getSchedulerConfig();
+    }
+
+    private async getSchedulerConfigValue(): Promise<Record<string, unknown>> {
+        const row = await this.repo.findOne({ where: { configKey: SCHEDULER_CONFIG_KEY } });
+        return this.toObject(row?.configValue);
     }
 
     private defaultLineOrder(): SchedulerLineOrderItem[] {
