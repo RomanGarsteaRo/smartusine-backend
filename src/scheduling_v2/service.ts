@@ -189,7 +189,20 @@ export class SchedulingV2Service {
 
         const deadlineMs = this.toEpochMs(raw?.dateRequis);
         const fab_deadlineMs = deadlineMs ? deadlineMs : null;
-        const fab_endDateMs = taskEndDateToEpochMs(raw?.endDate ?? raw?.END_DATE);
+
+        /*
+        Scopul este minimum absolut de schimbări, eu nu aș înlocui dateRequis cu startDate peste tot.
+        Asta ar rupe tocmai mecanismul actual de calendar/drag, fiindcă ele scriu în dateRequis
+            startDate  = ORIGINE, nu se modifică
+            dateRequis = data curentă/modificabilă, după care poziționăm taskul
+        Și nu adăugăm niciun câmp nou în DTO. Refolosim temporar cele două pe care le avem deja:
+            fab_deadlineMs = dateRequis   // rămâne exact ca acum (se schimba la drag, sau calendar change)
+            fab_endDateMs  = startDate    // temporar = originea (neschimbat, ce avem in ERP)
+
+            fab_deadlineMs → valoarea modificabilă din dateRequis
+            fab_endDateMs  → valoarea originală din startDate
+        */
+        const fab_endDateMs = taskEndDateToEpochMs(raw?.startDate ?? raw?.START_DATE);
 
         const flags: SchedulingTaskFlagsDto = {
             green: !!raw?.statGreen,
